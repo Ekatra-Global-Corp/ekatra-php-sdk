@@ -349,7 +349,7 @@ class EkatraVariant
                     'sellingPrice' => (float) $this->sellingPrice,
                     'availability' => $this->quantity > 0,
                     'quantity' => (int) $this->quantity,
-                    'size' => $this->size ?: 'default',
+                    'size' => $this->size ?: 'freestyle',
                     'variantId' => $this->id ?: 'default-' . uniqid()
                 ]
             ];

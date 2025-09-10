@@ -63,7 +63,6 @@ class SmartTransformer
             'variants' => [
                 [
                     'id' => $variantId,
-                    'name' => $data['variant_name'] ?? 'default',
                     'color' => $data['variant_color'] ?? 'unknown',
                     'variations' => [
                         [
@@ -72,7 +71,7 @@ class SmartTransformer
                             'sellingPrice' => (float) ($data['variant_selling_price'] ?? 0),
                             'availability' => ($data['variant_quantity'] ?? 0) > 0,
                             'quantity' => (int) ($data['variant_quantity'] ?? 0),
-                            'size' => $data['variant_size'] ?? 'default',
+                            'size' => $data['variant_size'] ?? 'freestyle',
                             'variantId' => $variantId
                         ]
                     ],
@@ -84,7 +83,7 @@ class SmartTransformer
             'sizes' => [
                 [
                     '_id' => $sizeId,
-                    'name' => $data['variant_size'] ?? 'default'
+                    'name' => $data['variant_size'] ?? 'freestyle'
                 ]
             ]
         ];
@@ -115,7 +114,7 @@ class SmartTransformer
                         'sellingPrice' => (float) ($variant['variant_selling_price'] ?? $variant['sellingPrice'] ?? 0),
                         'availability' => ($variant['variant_quantity'] ?? $variant['quantity'] ?? 0) > 0,
                         'quantity' => (int) ($variant['variant_quantity'] ?? $variant['quantity'] ?? 0),
-                        'size' => $variant['variant_size'] ?? $variant['size'] ?? 'default',
+                        'size' => $variant['variant_size'] ?? $variant['size'] ?? 'freestyle',
                         'variantId' => $variantId
                     ]
                 ],
@@ -126,7 +125,7 @@ class SmartTransformer
             
             $transformedSizes[] = [
                 '_id' => $sizeId,
-                'name' => $variant['variant_size'] ?? $variant['size'] ?? 'default'
+                'name' => $variant['variant_size'] ?? $variant['size'] ?? 'freestyle'
             ];
         }
         
@@ -178,7 +177,39 @@ class SmartTransformer
         
         // Handle variants
         if (isset($data['variants'])) {
-            $baseData['variants'] = $data['variants'];
+            // Check if variants need to be transformed to include variations
+            $transformedVariants = [];
+            foreach ($data['variants'] as $variant) {
+                if (!isset($variant['variations'])) {
+                    // This is a simple variant, transform it to complex structure
+                    $variantId = $variant['variant_id'] ?? $variant['id'] ?? uniqid('variant-', true);
+                    $sizeId = $this->generateId();
+                    
+                    $transformedVariant = $variant;
+                    $transformedVariant['variations'] = [
+                        [
+                            'sizeId' => $sizeId,
+                            'mrp' => (float) ($variant['mrp'] ?? $variant['original_price'] ?? 0),
+                            'sellingPrice' => (float) ($variant['selling_price'] ?? $variant['price'] ?? 0),
+                            'availability' => ($variant['quantity'] ?? 0) > 0,
+                            'quantity' => (int) ($variant['quantity'] ?? 0),
+                            'size' => $variant['size'] ?? 'freestyle',
+                            'variantId' => $variantId
+                        ]
+                    ];
+                    
+                    // Create mediaList from images
+                    if (isset($variant['images'])) {
+                        $transformedVariant['mediaList'] = $this->createMediaList($variant['images']);
+                    }
+                    
+                    $transformedVariants[] = $transformedVariant;
+                } else {
+                    // Already has variations, keep as is
+                    $transformedVariants[] = $variant;
+                }
+            }
+            $baseData['variants'] = $transformedVariants;
         } else {
             // Create single variant from simple data
             $variantId = $this->generateId();
@@ -187,7 +218,6 @@ class SmartTransformer
             $baseData['variants'] = [
                 [
                     'id' => $variantId,
-                    'name' => $data['variant_name'] ?? 'default',
                     'color' => $data['variant_color'] ?? 'unknown',
                     'variations' => [
                         [
@@ -196,7 +226,7 @@ class SmartTransformer
                             'sellingPrice' => (float) ($data['variant_selling_price'] ?? 0),
                             'availability' => ($data['variant_quantity'] ?? 0) > 0,
                             'quantity' => (int) ($data['variant_quantity'] ?? 0),
-                            'size' => $data['variant_size'] ?? 'default',
+                            'size' => $data['variant_size'] ?? 'freestyle',
                             'variantId' => $variantId
                         ]
                     ],
@@ -208,13 +238,73 @@ class SmartTransformer
         // Handle sizes
         if (isset($data['sizes'])) {
             $baseData['sizes'] = $data['sizes'];
+            
+            // If customer provided sizes but variants don't have proper sizeId linking,
+            // we need to update the variations to use existing size IDs
+            if (isset($baseData['variants'])) {
+                foreach ($baseData['variants'] as &$variant) {
+                    if (isset($variant['variations'])) {
+                        foreach ($variant['variations'] as &$variation) {
+                            // Find matching size by name
+                            $sizeName = $variation['size'] ?? 'freestyle';
+                            $matchingSize = null;
+                            
+                            foreach ($baseData['sizes'] as $size) {
+                                if ($size['name'] === $sizeName) {
+                                    $matchingSize = $size;
+                                    break;
+                                }
+                            }
+                            
+                            if ($matchingSize) {
+                                $variation['sizeId'] = $matchingSize['_id'];
+                            } else {
+                                // If no matching size found, create a new one
+                                $newSizeId = $this->generateId();
+                                $baseData['sizes'][] = [
+                                    '_id' => $newSizeId,
+                                    'name' => $sizeName
+                                ];
+                                $variation['sizeId'] = $newSizeId;
+                            }
+                        }
+                    }
+                }
+            }
         } else {
-            $baseData['sizes'] = [
-                [
-                    '_id' => $this->generateId(),
-                    'name' => 'default'
-                ]
-            ];
+            // Collect all unique sizeIds from variations
+            $sizeIds = [];
+            if (isset($baseData['variants'])) {
+                foreach ($baseData['variants'] as $variant) {
+                    if (isset($variant['variations'])) {
+                        foreach ($variant['variations'] as $variation) {
+                            if (isset($variation['sizeId'])) {
+                                $sizeIds[$variation['sizeId']] = $variation['size'] ?? 'freestyle';
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // Generate sizes array from collected sizeIds
+            if (!empty($sizeIds)) {
+                $baseData['sizes'] = [];
+                foreach ($sizeIds as $sizeId => $sizeName) {
+                    $baseData['sizes'][] = [
+                        '_id' => $sizeId,
+                        'name' => $sizeName
+                    ];
+                }
+            } else {
+                // Fallback: generate freestyle size
+                $sizeId = $this->generateId();
+                $baseData['sizes'] = [
+                    [
+                        '_id' => $sizeId,
+                        'name' => 'freestyle'
+                    ]
+                ];
+            }
         }
         
         return $baseData;
@@ -313,10 +403,17 @@ class SmartTransformer
     }
     
     /**
-     * Generate unique ID
+     * Generate unique ID using UUID4
      */
     private function generateId(): string
     {
-        return 'auto-' . uniqid() . '-' . mt_rand(1000, 9999);
+        return sprintf(
+            '%04x%04x-%04x-%04x-%04x-%04x%04x%04x',
+            mt_rand(0, 0xffff), mt_rand(0, 0xffff),
+            mt_rand(0, 0xffff),
+            mt_rand(0, 0x0fff) | 0x4000,
+            mt_rand(0, 0x3fff) | 0x8000,
+            mt_rand(0, 0xffff), mt_rand(0, 0xffff), mt_rand(0, 0xffff)
+        );
     }
 }

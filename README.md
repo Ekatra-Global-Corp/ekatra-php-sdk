@@ -516,9 +516,7 @@ This SDK is licensed under the MIT License. See the LICENSE file for details.
 
 For support and questions:
 
-- Email: support@ekatra.com
-- Documentation: [Link to documentation]
-- Issues: [GitHub Issues]
+- Email: support@ekatraglobal.com
 
 ## Changelog
 
@@ -531,3 +529,8 @@ For support and questions:
 - Laravel integration
 - Testing tools
 - Documentation and examples
+
+### Version 1.0.1
+- Fixed default size to 'freestyle' for consistency
+- Improved sizeId linking between variations and sizes arrays
+- Enhanced SmartTransformer size matching logic

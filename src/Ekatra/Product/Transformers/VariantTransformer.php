@@ -85,13 +85,14 @@ class VariantTransformer
         
         // Create variations array from single variant data
         $variationId = $mappedData['id'] ?: 'default-' . uniqid();
+        $sizeId = $this->generateSizeId(); // Generate proper size ID
         $variation = [
-            'sizeId' => $variationId,
+            'sizeId' => $sizeId, // This should reference the _id in sizes array
             'mrp' => (float) $this->findValueByFields($customerVariant, ['mrp', 'variant_mrp', 'originalPrice', 'listPrice']) ?: 0,
             'sellingPrice' => (float) $this->findValueByFields($customerVariant, ['sellingPrice', 'variant_selling_price', 'price', 'salePrice']) ?: 0,
             'availability' => true,
             'quantity' => (int) $this->findValueByFields($customerVariant, ['quantity', 'variant_quantity', 'stock', 'available']) ?: 0,
-            'size' => $this->findValueByFields($customerVariant, ['size', 'variant_size', 'item_size']) ?: 'default',
+            'size' => $this->findValueByFields($customerVariant, ['size', 'variant_size', 'item_size']) ?: 'freestyle',
             'variantId' => $variationId
         ];
         
@@ -144,6 +145,21 @@ class VariantTransformer
         ];
         
         return $mimeTypes[$extension] ?? 'image/jpeg';
+    }
+
+    /**
+     * Generate a unique size ID using UUID4
+     */
+    private function generateSizeId(): string
+    {
+        return sprintf(
+            '%04x%04x-%04x-%04x-%04x-%04x%04x%04x',
+            mt_rand(0, 0xffff), mt_rand(0, 0xffff),
+            mt_rand(0, 0xffff),
+            mt_rand(0, 0x0fff) | 0x4000,
+            mt_rand(0, 0x3fff) | 0x8000,
+            mt_rand(0, 0xffff), mt_rand(0, 0xffff), mt_rand(0, 0xffff)
+        );
     }
 
     /**
