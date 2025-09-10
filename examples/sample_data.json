@@ -1,0 +1,163 @@
+{
+  "id": "PROD001",
+  "name": "Premium Silver Ring",
+  "description": "High-quality silver ring with premium finish and durable construction",
+  "moreDetails": "This product features advanced manufacturing techniques and premium materials. Perfect for everyday use with long-lasting durability and elegant design.",
+  "currency": "INR",
+  "url": "https://example.com/products/PROD001",
+  "keywords": "silver ring premium quality durable elegant jewelry",
+  "aspectRatio": "16:9",
+  "specifications": [
+    {
+      "key": "Material",
+      "value": "Premium Silver Alloy"
+    },
+    {
+      "key": "Weight",
+      "value": "250g"
+    },
+    {
+      "key": "Dimensions",
+      "value": "15cm x 10cm x 5cm"
+    },
+    {
+      "key": "Warranty",
+      "value": "1 Year Manufacturer Warranty"
+    }
+  ],
+  "offers": [
+    {
+      "title": "Offer 1",
+      "productOfferDetails": [
+        {
+          "title": "2VYNPD9FPE9W",
+          "description": "₹1,200.00 off one-time purchase products in Home page • Minimum purchase of ₹1,000.00 • Applies once per order"
+        }
+      ]
+    },
+    {
+      "title": "Offer 2",
+      "productOfferDetails": [
+        {
+          "title": "NEWUSER10",
+          "description": "10% off for new users • Maximum discount ₹500.00 • Valid till month end"
+        }
+      ]
+    }
+  ],
+  "variants": [
+    {
+      "id": "46606215676071",
+      "name": "Silver Ring - Size 6",
+      "color": "Silver",
+      "weight": 250,
+      "thumbnail": "https://example.com/images/thumbnails/silver-variant-thumb.jpg",
+      "images": [
+        "https://example.com/images/silver-main-full.jpg",
+        "https://example.com/images/silver-detail-1.jpg",
+        "https://example.com/images/silver-detail-2.jpg"
+      ],
+      "videos": [
+        "https://example.com/videos/silver-product-demo.mp4"
+      ],
+      "mediaList": [
+        {
+          "mediaType": "IMAGE",
+          "thumbnailUrl": "https://example.com/images/thumbnails/silver-main-thumb.jpg",
+          "playUrl": "https://example.com/images/silver-main-full.jpg",
+          "mimeType": "image/jpeg",
+          "playerTypeEnum": "IMAGE_VIEWER",
+          "weight": 1,
+          "duration": 0,
+          "size": 245760,
+          "aspectRatio": "16:9"
+        },
+        {
+          "mediaType": "VIDEO",
+          "thumbnailUrl": "https://example.com/videos/thumbnails/silver-demo-thumb.jpg",
+          "playUrl": "https://example.com/videos/silver-product-demo.mp4",
+          "mimeType": "video/mp4",
+          "playerTypeEnum": "VIDEO_PLAYER",
+          "weight": 2,
+          "duration": 30,
+          "size": 5242880,
+          "aspectRatio": "16:9"
+        }
+      ],
+      "variations": [
+        {
+          "sizeId": "36a9dda7-5f41-43b6-b482-c7ac5b0055dc",
+          "mrp": 1749.00,
+          "sellingPrice": 1749.00,
+          "discount": 0.00,
+          "availability": true,
+          "quantity": 10,
+          "size": "freestyle"
+        }
+      ]
+    },
+    {
+      "id": "46606215676072",
+      "name": "Gold Ring - Size 8",
+      "color": "Gold",
+      "weight": 260,
+      "thumbnail": "https://example.com/images/thumbnails/gold-variant-thumb.jpg",
+      "images": [
+        "https://example.com/images/gold-main-full.jpg",
+        "https://example.com/images/gold-detail-1.jpg"
+      ],
+      "mediaList": [
+        {
+          "mediaType": "IMAGE",
+          "thumbnailUrl": "https://example.com/images/thumbnails/gold-main-thumb.jpg",
+          "playUrl": "https://example.com/images/gold-main-full.jpg",
+          "mimeType": "image/jpeg",
+          "playerTypeEnum": "IMAGE_VIEWER",
+          "weight": 1,
+          "duration": 0,
+          "size": 267890,
+          "aspectRatio": "16:9"
+        }
+      ],
+      "variations": [
+        {
+          "sizeId": "36a9dda7-5f41-43b6-b482-c7ac5b0055dc",
+          "mrp": 1999.00,
+          "sellingPrice": 1799.00,
+          "discount": 200.00,
+          "availability": true,
+          "quantity": 5,
+          "size": "freestyle"
+        }
+      ]
+    }
+  ],
+  "sizes": [
+    {
+      "id": "36a9dda7-5f41-43b6-b482-c7ac5b0055dc",
+      "name": "freestyle"
+    },
+    {
+      "id": "36a9dda7-5f41-43b6-b482-c7ac5b0055dd",
+      "name": "small"
+    },
+    {
+      "id": "36a9dda7-5f41-43b6-b482-c7ac5b0055de",
+      "name": "medium"
+    },
+    {
+      "id": "36a9dda7-5f41-43b6-b482-c7ac5b0055df",
+      "name": "large"
+    }
+  ],
+  "supportedCurrency": [
+    "INR",
+    "USD",
+    "EUR",
+    "GBP"
+  ],
+  "metadata": {
+    "lastUpdated": "2025-05-16T10:05:31.587Z",
+    "ttl": 300
+  }
+}
