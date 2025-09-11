@@ -534,3 +534,8 @@ For support and questions:
 - Fixed default size to 'freestyle' for consistency
 - Improved sizeId linking between variations and sizes arrays
 - Enhanced SmartTransformer size matching logic
+
+### Version 1.0.2
+- Fixed discount calculation for simple variant data
+- Added missing discount logic to transformSimpleToComplex method
+- Ensures all transformation paths calculate discounts correctly
