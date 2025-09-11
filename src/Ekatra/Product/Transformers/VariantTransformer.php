@@ -349,6 +349,18 @@ class VariantTransformer
             }
         }
         
+        // Auto-calculate discount if not provided and MRP > SellingPrice
+        if (!isset($transformed['discount']) && isset($transformed['mrp']) && isset($transformed['sellingPrice'])) {
+            $mrp = (float) $transformed['mrp'];
+            $sellingPrice = (float) $transformed['sellingPrice'];
+            
+            if ($mrp > 0 && $sellingPrice < $mrp) {
+                // Use HALF_UP rounding (same as Java BigDecimal)
+                $discount = (($mrp - $sellingPrice) / $mrp) * 100;
+                $transformed['discount'] = round($discount, 2, PHP_ROUND_HALF_UP);
+            }
+        }
+        
         return $transformed;
     }
 

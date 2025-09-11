@@ -50,7 +50,9 @@ class EkatraVariant
         
         // Auto-calculate discount if not set
         if ($this->discountPercent === null && $mrp > $sellingPrice) {
-            $this->discountPercent = round((($mrp - $sellingPrice) / $mrp) * 100, 2);
+            // Use HALF_UP rounding (same as Java BigDecimal)
+            $discount = (($mrp - $sellingPrice) / $mrp) * 100;
+            $this->discountPercent = round($discount, 2, PHP_ROUND_HALF_UP);
         }
         
         return $this;

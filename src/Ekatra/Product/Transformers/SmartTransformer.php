@@ -148,7 +148,7 @@ class SmartTransformer
     {
         // Complex data should already be in the right format
         // Just ensure all required fields are present
-        return [
+        $result = [
             'productId' => $data['product_id'] ?? $data['productId'] ?? $this->generateId(),
             'title' => $data['title'] ?? '',
             'description' => $data['description'] ?? '',
@@ -158,6 +158,28 @@ class SmartTransformer
             'variants' => $data['variants'] ?? [],
             'sizes' => $data['sizes'] ?? []
         ];
+        
+        // Auto-calculate discount for all variations
+        if (isset($result['variants'])) {
+            foreach ($result['variants'] as &$variant) {
+                if (isset($variant['variations'])) {
+                    foreach ($variant['variations'] as &$variation) {
+                        if (!isset($variation['discount']) && isset($variation['mrp']) && isset($variation['sellingPrice'])) {
+                            $mrp = (float) $variation['mrp'];
+                            $sellingPrice = (float) $variation['sellingPrice'];
+                            
+                            if ($mrp > 0 && $sellingPrice < $mrp) {
+                                // Use HALF_UP rounding (same as Java BigDecimal)
+                                $discount = (($mrp - $sellingPrice) / $mrp) * 100;
+                                $variation['discount'] = round($discount, 2, PHP_ROUND_HALF_UP);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        return $result;
     }
     
     /**
@@ -210,6 +232,24 @@ class SmartTransformer
                 }
             }
             $baseData['variants'] = $transformedVariants;
+            
+            // Auto-calculate discount for all variations
+            foreach ($baseData['variants'] as &$variant) {
+                if (isset($variant['variations'])) {
+                    foreach ($variant['variations'] as &$variation) {
+                        if (!isset($variation['discount']) && isset($variation['mrp']) && isset($variation['sellingPrice'])) {
+                            $mrp = (float) $variation['mrp'];
+                            $sellingPrice = (float) $variation['sellingPrice'];
+                            
+                            if ($mrp > 0 && $sellingPrice < $mrp) {
+                                // Use HALF_UP rounding (same as Java BigDecimal)
+                                $discount = (($mrp - $sellingPrice) / $mrp) * 100;
+                                $variation['discount'] = round($discount, 2, PHP_ROUND_HALF_UP);
+                            }
+                        }
+                    }
+                }
+            }
         } else {
             // Create single variant from simple data
             $variantId = $this->generateId();
@@ -233,6 +273,21 @@ class SmartTransformer
                     'mediaList' => $this->createMediaList($images)
                 ]
             ];
+            
+            // Auto-calculate discount for simple variant
+            if (isset($baseData['variants'][0]['variations'][0])) {
+                $variation = &$baseData['variants'][0]['variations'][0];
+                if (!isset($variation['discount']) && isset($variation['mrp']) && isset($variation['sellingPrice'])) {
+                    $mrp = (float) $variation['mrp'];
+                    $sellingPrice = (float) $variation['sellingPrice'];
+                    
+                    if ($mrp > 0 && $sellingPrice < $mrp) {
+                        // Use HALF_UP rounding (same as Java BigDecimal)
+                        $discount = (($mrp - $sellingPrice) / $mrp) * 100;
+                        $variation['discount'] = round($discount, 2, PHP_ROUND_HALF_UP);
+                    }
+                }
+            }
         }
         
         // Handle sizes
