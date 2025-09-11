@@ -53,6 +53,16 @@ class SmartTransformer
         // Extract images
         $images = $this->extractImages($data);
         
+        // Calculate discount
+        $mrp = (float) ($data['variant_mrp'] ?? 0);
+        $sellingPrice = (float) ($data['variant_selling_price'] ?? 0);
+        $discount = null;
+        
+        if ($mrp > 0 && $sellingPrice < $mrp) {
+            // Use HALF_UP rounding (same as Java BigDecimal)
+            $discount = round((($mrp - $sellingPrice) / $mrp) * 100, 2, PHP_ROUND_HALF_UP);
+        }
+        
         return [
             'productId' => $data['product_id'] ?? $this->generateId(),
             'title' => $data['title'] ?? '',
@@ -73,7 +83,7 @@ class SmartTransformer
                             'quantity' => (int) ($data['variant_quantity'] ?? 0),
                             'size' => $data['variant_size'] ?? 'freestyle',
                             'variantId' => $variantId
-                        ]
+                        ] + ($discount !== null ? ['discount' => $discount] : [])
                     ],
                     'mediaList' => $this->createMediaList($images),
                     'weight' => 0,
