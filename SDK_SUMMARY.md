@@ -4,6 +4,8 @@
 
 A comprehensive PHP SDK that allows customers to transform their product data into the standardized Ekatra format. This is a **data transformation SDK** that sits in the customer's system and converts their data before sending it to your API.
 
+**🚀 NEW in v1.1.0**: Flexible API transformation that works with ANY API format (Shopify, WooCommerce, Magento, etc.)
+
 ## 🏗️ Architecture
 
 ### Core Components
@@ -12,17 +14,20 @@ A comprehensive PHP SDK that allows customers to transform their product data in
 2. **EkatraVariant** - Individual variant handling with variations and mediaList support
 3. **EkatraSDK** - Main entry point with smart transformation methods
 4. **SmartTransformer** - Intelligent data structure detection and transformation
-5. **EducationalValidator** - Clear error messages with actionable suggestions
-6. **ManualSetupGuide** - Step-by-step instructions for complex requirements
-7. **Transformers** - Smart field mapping and data transformation
-8. **Validators** - Comprehensive validation with detailed error messages
-9. **Laravel Integration** - Full Laravel support with facades, commands, and web routes
+5. **FlexibleSmartTransformer** - NEW: Handles ANY API format with flexible field mapping
+6. **EducationalValidator** - Clear error messages with actionable suggestions
+7. **ManualSetupGuide** - Step-by-step instructions for complex requirements
+8. **Transformers** - Smart field mapping and data transformation
+9. **Validators** - Comprehensive validation with detailed error messages
+10. **Laravel Integration** - Full Laravel support with facades, commands, and web routes
 
 ### Key Features
 
+- ✅ **Flexible API Transformation** - NEW: Works with ANY API format (Shopify, WooCommerce, etc.)
 - ✅ **Smart Auto-Transformation** - Automatically converts simple data to complex Ekatra structure
 - ✅ **Intelligent Detection** - Detects data complexity and applies appropriate transformation
 - ✅ **Robust Field Mapping** - Maps 50+ field variations across different naming conventions
+- ✅ **Nested Data Extraction** - Handles complex nested structures like `{success: true, product_details: {...}}`
 - ✅ **Educational Validation** - Clear error messages with actionable suggestions
 - ✅ **Manual Setup Guide** - Step-by-step instructions for complex requirements
 - ✅ **Laravel Integration** - Service provider, facades, commands, and web routes
@@ -80,9 +85,22 @@ composer require ekatra/product-sdk
 ```
 
 ### 2. Data Transformation
+
+#### NEW: Flexible API Transformation (v1.1.0+)
 ```php
 use Ekatra\Product\EkatraSDK;
 
+// Works with ANY API format!
+$result = EkatraSDK::smartTransformProductFlexible($customerData);
+
+// Examples:
+// Shopify: {id, title, variants: [...], images: [...]}
+// WooCommerce: {id, name, price, regular_price, tags: [...]}
+// Minimal: {id, name, price}
+```
+
+#### Legacy Method (Still Supported)
+```php
 $customerData = [
     'id' => 'PROD001',
     'name' => 'Silver Ring',

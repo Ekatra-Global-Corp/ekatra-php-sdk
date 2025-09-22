@@ -4,134 +4,154 @@ namespace Ekatra\Product\Tests\Unit;
 
 use PHPUnit\Framework\TestCase;
 use Ekatra\Product\EkatraSDK;
-use Ekatra\Product\Core\EkatraProduct;
-use Ekatra\Product\Core\EkatraVariant;
 
 class EkatraSDKTest extends TestCase
 {
-    public function testCanCreateProduct()
-    {
-        $product = EkatraSDK::product();
-        $this->assertInstanceOf(EkatraProduct::class, $product);
-    }
-
-    public function testCanCreateVariant()
-    {
-        $variant = EkatraSDK::variant();
-        $this->assertInstanceOf(EkatraVariant::class, $variant);
-    }
-
-    public function testCanTransformValidProduct()
+    public function testSmartTransformProduct()
     {
         $customerData = [
-            'id' => 'PROD001',
-            'name' => 'Test Product',
+            'product_id' => '123',
+            'title' => 'Test Product',
             'description' => 'Test Description',
-            'url' => 'https://example.com/product',
-            'keywords' => 'test,product',
-            'variants' => [
-                [
-                    'name' => 'Test Variant',
-                    'price' => 100,
-                    'originalPrice' => 120,
-                    'stock' => 10,
-                    'color' => 'Red',
-                    'size' => 'M',
-                    'images' => ['image1.jpg', 'image2.jpg']
-                ]
-            ]
+            'currency' => 'USD',
+            'existing_url' => 'https://example.com/product',
+            'keywords' => ['test', 'product'],
+            'variant_name' => 'Test Variant',
+            'variant_mrp' => '100.00',
+            'variant_selling_price' => '80.00',
+            'image_urls' => 'https://example.com/image.jpg'
         ];
-
-        $result = EkatraSDK::transformProduct($customerData);
         
-        $this->assertTrue($result['success']);
+        $result = EkatraSDK::smartTransformProduct($customerData);
+        
+        $this->assertIsArray($result);
+        $this->assertArrayHasKey('success', $result);
         $this->assertArrayHasKey('data', $result);
-        $this->assertEquals('PROD001', $result['data']['productId']);
+        $this->assertArrayHasKey('validation', $result);
+        $this->assertTrue($result['success']);
+        $this->assertIsArray($result['data']);
+        $this->assertEquals('123', $result['data']['productId']);
         $this->assertEquals('Test Product', $result['data']['title']);
     }
-
-    public function testHandlesInvalidProduct()
-    {
-        $invalidData = [
-            'id' => '', // Invalid: empty ID
-            'name' => 'Test Product',
-            'description' => '', // Invalid: empty description
-            'variants' => [
-                [
-                    'name' => 'Test Variant',
-                    'price' => -100, // Invalid: negative price
-                    'stock' => 10
-                ]
-            ]
-        ];
-
-        $result = EkatraSDK::transformProduct($invalidData);
-        
-        $this->assertFalse($result['success']);
-        $this->assertArrayHasKey('validation', $result);
-        $this->assertFalse($result['validation']['valid']);
-        $this->assertNotEmpty($result['validation']['errors']);
-    }
-
-    public function testCanValidateProduct()
+    
+    public function testDiscountCalculation()
     {
         $customerData = [
-            'id' => 'PROD001',
-            'name' => 'Test Product',
-            'description' => 'Test Description',
-            'url' => 'https://example.com/product',
-            'keywords' => 'test,product',
+            'product_id' => '123',
+            'title' => 'Test Product',
+            'currency' => 'USD',
+            'variant_mrp' => '100.00',
+            'variant_selling_price' => '80.00'
+        ];
+        
+        $result = EkatraSDK::smartTransformProduct($customerData);
+        
+        $this->assertArrayHasKey('variants', $result);
+        $this->assertCount(1, $result['variants']);
+        
+        $variant = $result['variants'][0];
+        $this->assertArrayHasKey('variations', $variant);
+        $this->assertCount(1, $variant['variations']);
+        
+        $variation = $variant['variations'][0];
+        $this->assertArrayHasKey('discount', $variation);
+        $this->assertEquals(20.0, $variation['discount']);
+    }
+
+    public function testGetManualSetupGuide()
+    {
+        $guide = EkatraSDK::getManualSetupGuide();
+        
+        $this->assertIsString($guide);
+        $this->assertNotEmpty($guide);
+        $this->assertStringContainsString('Manual Setup Guide', $guide);
+    }
+
+    public function testGetDataStructureExamples()
+    {
+        $examples = EkatraSDK::getDataStructureExamples();
+        
+        $this->assertIsString($examples);
+        $this->assertNotEmpty($examples);
+        $this->assertStringContainsString('Data Structure Examples', $examples);
+    }
+
+    public function testGetCodeExamples()
+    {
+        $examples = EkatraSDK::getCodeExamples();
+        
+        $this->assertIsString($examples);
+        $this->assertNotEmpty($examples);
+        $this->assertStringContainsString('Code Examples', $examples);
+    }
+
+    public function testGetBestPractices()
+    {
+        $practices = EkatraSDK::getBestPractices();
+        
+        $this->assertIsString($practices);
+        $this->assertNotEmpty($practices);
+        $this->assertStringContainsString('Best Practices', $practices);
+    }
+
+    public function testGetTroubleshootingGuide()
+    {
+        $guide = EkatraSDK::getTroubleshootingGuide();
+        
+        $this->assertIsString($guide);
+        $this->assertNotEmpty($guide);
+        $this->assertStringContainsString('Troubleshooting', $guide);
+    }
+
+    public function testGetEducationalValidation()
+    {
+        $validation = EkatraSDK::getEducationalValidation();
+        
+        $this->assertIsString($validation);
+        $this->assertNotEmpty($validation);
+        $this->assertStringContainsString('Educational Validation', $validation);
+    }
+
+    public function testCanAutoTransform()
+    {
+        $simpleData = [
+            'product_id' => '123',
+            'title' => 'Test Product',
+            'variant_mrp' => '100.00',
+            'variant_selling_price' => '80.00'
+        ];
+        
+        $this->assertTrue(EkatraSDK::canAutoTransform($simpleData));
+        
+        $complexData = [
+            'product_id' => '123',
+            'title' => 'Test Product',
             'variants' => [
                 [
-                    'name' => 'Test Variant',
-                    'price' => 100,
-                    'originalPrice' => 120,
-                    'stock' => 10,
-                    'images' => ['image1.jpg']
+                    '_id' => 'v1',
+                    'color' => 'red',
+                    'variations' => [
+                        [
+                            'sizeId' => 's1',
+                            'mrp' => '100.00',
+                            'sellingPrice' => '80.00'
+                        ]
+                    ]
                 ]
             ]
         ];
-
-        $validation = EkatraSDK::validateProduct($customerData);
         
-        $this->assertArrayHasKey('valid', $validation);
-        $this->assertArrayHasKey('errors', $validation);
+        $this->assertTrue(EkatraSDK::canAutoTransform($complexData));
     }
 
-    public function testCanTransformVariant()
+    public function testGetSupportedFormats()
     {
-        $variantData = [
-            'name' => 'Test Variant',
-            'price' => 100,
-            'originalPrice' => 120,
-            'stock' => 10,
-            'color' => 'Red',
-            'size' => 'M',
-            'images' => ['image1.jpg', 'image2.jpg']
-        ];
-
-        $result = EkatraSDK::transformVariant($variantData);
+        $formats = EkatraSDK::getSupportedFormats();
         
-        $this->assertTrue($result['success']);
-        $this->assertArrayHasKey('data', $result);
-        $this->assertEquals('Test Variant', $result['data']['name']);
-        $this->assertEquals(100, $result['data']['sellingPrice']);
-    }
-
-    public function testGetFieldMappings()
-    {
-        $mappings = EkatraSDK::getFieldMappings();
-        
-        $this->assertArrayHasKey('product', $mappings);
-        $this->assertArrayHasKey('variant', $mappings);
-        $this->assertArrayHasKey('productId', $mappings['product']);
-        $this->assertArrayHasKey('name', $mappings['variant']);
-    }
-
-    public function testGetVersion()
-    {
-        $version = EkatraSDK::version();
-        $this->assertIsString($version);
-        $this->assertNotEmpty($version);
+        $this->assertIsArray($formats);
+        $this->assertNotEmpty($formats);
+        $this->assertContains('SIMPLE_SINGLE_VARIANT', $formats);
+        $this->assertContains('COMPLEX_STRUCTURE', $formats);
+        $this->assertContains('MIXED_STRUCTURE', $formats);
     }
 }

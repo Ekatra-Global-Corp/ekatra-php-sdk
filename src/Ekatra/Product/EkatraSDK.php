@@ -6,6 +6,7 @@ use Ekatra\Product\Core\EkatraProduct;
 use Ekatra\Product\Core\EkatraVariant;
 use Ekatra\Product\Exceptions\EkatraValidationException;
 use Ekatra\Product\Transformers\SmartTransformer;
+use Ekatra\Product\Transformers\FlexibleSmartTransformer;
 use Ekatra\Product\Validators\EducationalValidator;
 use Ekatra\Product\Helpers\ManualSetupGuide;
 
@@ -305,5 +306,71 @@ class EkatraSDK
     {
         $validator = new EducationalValidator();
         return $validator->getSupportedFormats();
+    }
+
+    // ========================================
+    // NEW FLEXIBLE TRANSFORMATION METHODS
+    // ========================================
+
+    /**
+     * Smart transform product with flexible field mapping (RECOMMENDED)
+     * 
+     * This method handles various API response formats including:
+     * - Shopify format (variants array, images array)
+     * - WooCommerce format (tags array, pricing fields)
+     * - Magento format (custom_attributes)
+     * - Generic e-commerce formats
+     * - Minimal formats (just id, name, price)
+     * 
+     * @param array $customerData The customer's product data in any format
+     * @return array Transformation result with success/error status
+     */
+    public static function smartTransformProductFlexible(array $customerData): array
+    {
+        $flexibleTransformer = new FlexibleSmartTransformer();
+        return $flexibleTransformer->transformToEkatra($customerData);
+    }
+
+    /**
+     * Transform product with flexible field mapping (ALIAS)
+     * 
+     * This is an alias for smartTransformProductFlexible() for convenience.
+     * Use this method for maximum compatibility with different API formats.
+     * 
+     * @param array $customerData The customer's product data in any format
+     * @return array Transformation result with success/error status
+     */
+    public static function transformProductFlexible(array $customerData): array
+    {
+        return self::smartTransformProductFlexible($customerData);
+    }
+
+    /**
+     * Check if data can be auto-transformed with flexible transformer
+     * 
+     * @param array $customerData The customer's product data
+     * @return bool True if data can be auto-transformed
+     */
+    public static function canAutoTransformFlexible(array $customerData): bool
+    {
+        $flexibleTransformer = new FlexibleSmartTransformer();
+        $result = $flexibleTransformer->transformToEkatra($customerData);
+        return $result['success'] && $result['canAutoTransform'];
+    }
+
+    /**
+     * Get supported API formats for flexible transformer
+     * 
+     * @return array List of supported API formats
+     */
+    public static function getSupportedApiFormats(): array
+    {
+        return [
+            'shopify' => 'Shopify API format (variants array, images array)',
+            'woocommerce' => 'WooCommerce API format (tags array, pricing)',
+            'magento' => 'Magento API format (custom_attributes)',
+            'generic' => 'Generic e-commerce format',
+            'minimal' => 'Minimal format (id, name, price only)'
+        ];
     }
 }

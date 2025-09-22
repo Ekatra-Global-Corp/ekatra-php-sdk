@@ -168,12 +168,133 @@ class ProductController extends Controller
 }
 ```
 
+## 🚀 Flexible API Transformation (NEW in v1.1.0)
+
+The SDK now supports **flexible field mapping** that works with any API response format! This is the **recommended approach** for maximum compatibility.
+
+### Supported API Formats
+
+- **Shopify**: `{id, title, variants: [...], images: [...]}`
+- **WooCommerce**: `{id, name, price, regular_price, tags: [...]}`
+- **Magento**: `{id, name, custom_attributes: [...]}`
+- **Generic E-commerce**: `{item_id, product_name, price, images: [...]}`
+- **Minimal**: `{id, name, price}` (just the basics!)
+
+### Flexible Transformation Methods
+
+#### `smartTransformProductFlexible()` - RECOMMENDED
+
+```php
+use Ekatra\Product\EkatraSDK;
+
+// Works with ANY API format!
+$result = EkatraSDK::smartTransformProductFlexible($customerData);
+
+if ($result['success']) {
+    echo "✅ Transformation successful!";
+    echo json_encode($result['data'], JSON_PRETTY_PRINT);
+} else {
+    echo "❌ Transformation failed:";
+    foreach ($result['validation']['errors'] as $error) {
+        echo "- " . $error;
+    }
+}
+```
+
+#### `transformProductFlexible()` - ALIAS
+
+```php
+// Same as smartTransformProductFlexible() but shorter
+$result = EkatraSDK::transformProductFlexible($customerData);
+```
+
+### Real-World Examples
+
+#### Shopify API Format
+```php
+$shopifyData = [
+    'id' => 123456789,
+    'title' => 'Classic T-Shirt',
+    'body_html' => '<p>Comfortable cotton t-shirt</p>',
+    'price' => '29.99',
+    'compare_at_price' => '39.99',
+    'variants' => [
+        [
+            'id' => 987654321,
+            'title' => 'Small / Red',
+            'price' => '29.99',
+            'compare_at_price' => '39.99',
+            'inventory_quantity' => 10
+        ]
+    ],
+    'images' => [
+        ['src' => 'https://cdn.shopify.com/tshirt-red.jpg']
+    ]
+];
+
+$result = EkatraSDK::smartTransformProductFlexible($shopifyData);
+// ✅ Works perfectly!
+```
+
+#### Minimal Format
+```php
+$minimalData = [
+    'id' => 999,
+    'name' => 'Basic Product',
+    'price' => 50.00
+];
+
+$result = EkatraSDK::smartTransformProductFlexible($minimalData);
+// ✅ Works perfectly! Creates default variant automatically
+```
+
+### Migration from Old Methods
+
+**Old way (still works):**
+```php
+$result = EkatraSDK::smartTransformProduct($customerData);
+```
+
+**New way (recommended):**
+```php
+$result = EkatraSDK::smartTransformProductFlexible($customerData);
+```
+
+### Utility Methods
+
+```php
+// Check if data can be auto-transformed
+$canTransform = EkatraSDK::canAutoTransformFlexible($customerData);
+
+// Get supported API formats
+$formats = EkatraSDK::getSupportedApiFormats();
+// Returns: ['shopify' => '...', 'WooCom' => '...', etc.]
+```
+
 ## API Reference
 
 ### Smart Transformation Methods
 
+#### Flexible API Transformation (RECOMMENDED for v1.1.0+)
+
 ```php
-// Smart auto-transformation (recommended)
+// NEW: Flexible transformation - works with ANY API format
+$result = EkatraSDK::smartTransformProductFlexible($customerData);
+
+// Alias for convenience
+$result = EkatraSDK::transformProductFlexible($customerData);
+
+// Check if data can be auto-transformed with flexible transformer
+$canTransform = EkatraSDK::canAutoTransformFlexible($customerData);
+
+// Get supported API formats
+$formats = EkatraSDK::getSupportedApiFormats();
+```
+
+#### Legacy Methods (Still Supported)
+
+```php
+// Original smart transformation (legacy)
 $result = EkatraSDK::smartTransformProduct($customerData);
 
 // Check if data can be auto-transformed
@@ -539,3 +660,35 @@ For support and questions:
 - Fixed discount calculation for simple variant data
 - Added missing discount logic to transformSimpleToComplex method
 - Ensures all transformation paths calculate discounts correctly
+
+### Version 1.0.5 - FLEXIBLE API TRANSFORMATION 🚀
+
+#### ✨ New Features
+- **Flexible API Transformation**: New `smartTransformProductFlexible()` method that works with ANY API format
+- **Multi-Platform Support**: Handles Shopify, WooCommerce, Magento, and generic e-commerce formats
+- **Smart Field Mapping**: Automatically maps 50+ field variations across different naming conventions
+- **Nested Data Extraction**: Handles complex nested structures like `{success: true, product_details: {...}}`
+- **Default Variant Creation**: Creates sensible defaults for minimal data formats
+- **Backward Compatibility**: All existing methods continue to work unchanged
+
+#### 🔧 New Methods
+- `EkatraSDK::smartTransformProductFlexible($data)` - **RECOMMENDED** for new implementations
+- `EkatraSDK::transformProductFlexible($data)` - Alias for convenience
+- `EkatraSDK::canAutoTransformFlexible($data)` - Check transformation capability
+- `EkatraSDK::getSupportedApiFormats()` - List supported API formats
+
+#### 🛠️ Technical Improvements
+- **PSR-4 Autoloading**: Fixed autoloader configuration for better compatibility
+- **Enhanced Validation**: More flexible validation with smart defaults
+- **Better Error Handling**: Clearer error messages and suggestions
+- **CI/CD Pipeline**: Added GitHub Actions for automated testing
+
+#### 📚 Documentation
+- Updated README with comprehensive examples for all supported formats
+- Added migration guide for existing users
+- Real-world examples for each API format
+
+#### 🔧 Technical Improvements
+- **PSR-4 Autoloading**: Fixed autoloader configuration for better compatibility
+  - **Migration**: Run `composer dump-autoload` after updating
+  - **Impact**: None - backward compatible, just better autoloading
