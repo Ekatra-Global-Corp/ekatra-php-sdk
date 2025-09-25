@@ -39,13 +39,16 @@ jobs:
       uses: actions/cache@v3
       with:
         path: vendor
-        key: ${{ runner.os }}-php-${{ matrix.php-version }}-laravel-${{ matrix.laravel-version }}-composer-${{ hashFiles('**/composer.lock') }}
+        key: ${{ runner.os }}-php-${{ matrix.php-version }}-laravel-${{ matrix.laravel-version }}-composer-${{ hashFiles('**/composer.json') }}
         restore-keys: |
           ${{ runner.os }}-php-${{ matrix.php-version }}-laravel-${{ matrix.laravel-version }}-composer-
           ${{ runner.os }}-php-${{ matrix.php-version }}-composer-
 
     - name: Install dependencies
-      run: composer install --prefer-dist --no-progress --no-interaction
+      run: |
+        # Remove composer.lock to force fresh resolution for each PHP/Laravel combination
+        rm -f composer.lock
+        composer install --prefer-dist --no-progress --no-interaction
 
     - name: Run tests
       run: composer test
