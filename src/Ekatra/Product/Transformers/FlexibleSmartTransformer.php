@@ -128,7 +128,7 @@ class FlexibleSmartTransformer
     /**
      * Find value by trying multiple field names
      */
-    private function findValueByFields($data, $fields): mixed
+    private function findValueByFields($data, $fields)
     {
         foreach ($fields as $field) {
             if (isset($data[$field]) && !empty($data[$field])) {
