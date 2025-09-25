@@ -11,7 +11,8 @@ class LaravelIntegrationTest extends TestCase
 {
     public function testServiceProviderRegistration()
     {
-        $this->assertTrue(class_exists(EkatraProductServiceProvider::class));
+        // The class is ServiceProvider in the Laravel namespace
+        $this->assertTrue(class_exists('Ekatra\Product\Laravel\ServiceProvider'));
     }
     
     public function testFacadeAccess()

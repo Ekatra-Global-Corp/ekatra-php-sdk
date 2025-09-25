@@ -13,7 +13,7 @@ class EkatraValidationException extends Exception
 {
     protected array $errors;
 
-    public function __construct(string $message = "", array $errors = [], int $code = 0, ?Exception $previous = null)
+    public function __construct(string $message = "", array $errors = [], int $code = 422, ?Exception $previous = null)
     {
         parent::__construct($message, $code, $previous);
         $this->errors = $errors;

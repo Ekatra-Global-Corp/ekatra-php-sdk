@@ -2,20 +2,20 @@
 
 namespace Ekatra\Product\Laravel;
 
-use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\ServiceProvider as BaseServiceProvider;
 use Ekatra\Product\Laravel\Commands\TestMappingCommand;
 
 /**
- * EkatraProductServiceProvider
+ * ServiceProvider
  * 
  * Laravel service provider for Ekatra Product SDK
  */
-class EkatraProductServiceProvider extends ServiceProvider
+class ServiceProvider extends BaseServiceProvider
 {
     /**
      * Register services
      */
-    public function register(): void
+    public function register()
     {
         $this->mergeConfigFrom(
             __DIR__ . '/../../config/ekatra.php',
@@ -26,7 +26,7 @@ class EkatraProductServiceProvider extends ServiceProvider
     /**
      * Bootstrap services
      */
-    public function boot(): void
+    public function boot()
     {
         // Publish configuration
         $this->publishes([

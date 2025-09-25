@@ -4,11 +4,13 @@ composer.phar
 
 # Test files (customers don't need these)
 test_*.php
+test_*.sh
 manual_test.php
 minimal_test.php
 simple_test.php
 final_test.php
 test_kirtilals_api.php
+test_*.php
 
 # Development files
 install.sh
