@@ -3,7 +3,7 @@ name: Safe Release
 on:
   push:
     tags:
-      - 'v*'
+      - 'v*-rc*'  # Only trigger on release candidate tags
 
 jobs:
   test:
@@ -91,7 +91,8 @@ jobs:
 
     - name: Publish Release
       run: |
-        gh release edit ${{ github.ref }} --draft=false
+        TAG_NAME=${GITHUB_REF#refs/tags/}
+        gh release edit $TAG_NAME --draft=false
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
