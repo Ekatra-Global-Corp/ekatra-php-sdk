@@ -1,9 +1,8 @@
-name: Safe Release
+name: Release
 
 on:
-  push:
-    tags:
-      - 'v*'
+  release:
+    types: [published]
 
 jobs:
   test:
@@ -41,26 +40,39 @@ jobs:
     - name: Run tests
       run: composer test
 
-  create-draft-release:
+  release:
     runs-on: ubuntu-latest
-    name: Create Draft Release
+    name: Create Release
     needs: test
     
     permissions:
       contents: write
+      packages: write
 
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Create Draft Release
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: 8.3
+        extensions: mbstring, xml, curl, json
+
+    - name: Install dependencies
+      run: composer install --prefer-dist --no-progress --no-interaction
+
+    - name: Run tests
+      run: composer test
+
+    - name: Create Release
       uses: actions/create-release@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         tag_name: ${{ github.ref }}
         release_name: Release ${{ github.ref }}
-        draft: true
+        draft: false
         prerelease: false
         body: |
           ## Release ${{ github.ref }}
@@ -77,28 +89,10 @@ jobs:
           composer require ekatra/product-sdk:^1.0.8
           ```
 
-  publish-release:
-    runs-on: ubuntu-latest
-    name: Publish Release
-    needs: create-draft-release
-    
-    permissions:
-      contents: write
-
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-
-    - name: Publish Release
-      run: |
-        gh release edit ${{ github.ref }} --draft=false
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
   packagist:
     runs-on: ubuntu-latest
     name: Update Packagist
-    needs: publish-release
+    needs: release
     
     permissions:
       contents: read
