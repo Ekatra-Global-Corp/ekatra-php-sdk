@@ -55,5 +55,18 @@ jobs:
 
     - name: Update Packagist
       run: |
-        curl -X POST https://packagist.org/api/update-package?username=${{ secrets.PACKAGIST_USERNAME }}&apiToken=${{ secrets.PACKAGIST_TOKEN }} \
-          -d repository[url]=https://github.com/Ekatra-Global-Corp/ekatra-php-sdk.git
+        echo "Updating Packagist..."
+        echo "Username: ${{ secrets.PACKAGIST_USERNAME }}"
+        echo "Token: ${{ secrets.PACKAGIST_TOKEN }}"
+        
+        if [ -z "${{ secrets.PACKAGIST_USERNAME }}" ] || [ -z "${{ secrets.PACKAGIST_TOKEN }}" ]; then
+          echo "❌ PACKAGIST_USERNAME or PACKAGIST_TOKEN secrets are not set!"
+          echo "Please add these secrets in GitHub repository settings."
+          exit 1
+        fi
+        
+        curl -X POST "https://packagist.org/api/update-package?username=${{ secrets.PACKAGIST_USERNAME }}&apiToken=${{ secrets.PACKAGIST_TOKEN }}" \
+          -d "repository[url]=https://github.com/Ekatra-Global-Corp/ekatra-php-sdk.git" \
+          -H "Content-Type: application/x-www-form-urlencoded"
+        
+        echo "✅ Packagist update request sent successfully!"
