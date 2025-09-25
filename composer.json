@@ -3,7 +3,7 @@
     "description": "Ekatra Product SDK for PHP - Transform your product data into Ekatra Co-Deciding format",
     "type": "library",
     "license": "MIT",
-    "version": "1.0.5",
+    "version": "1.0.6",
     "authors": [
         {
             "name": "Ekatra Global Corp",
