@@ -6,9 +6,45 @@ on:
       - 'v*'
 
 jobs:
+  test:
+    runs-on: ubuntu-latest
+    name: Run Tests
+    
+    strategy:
+      matrix:
+        php-version: [7.4, 8.0, 8.1, 8.2, 8.3]
+        laravel-version: [6, 7, 8, 9, 10, 11]
+        exclude:
+          - php-version: 7.4
+            laravel-version: 11
+          - php-version: 8.0
+            laravel-version: 11
+          - php-version: 8.1
+            laravel-version: 11
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: ${{ matrix.php-version }}
+        extensions: mbstring, xml, curl, json
+
+    - name: Install dependencies
+      run: |
+        # Remove composer.lock to force fresh resolution for each PHP/Laravel combination
+        rm -f composer.lock
+        composer install --prefer-dist --no-progress --no-interaction
+
+    - name: Run tests
+      run: composer test
+
   release:
     runs-on: ubuntu-latest
     name: Create Release
+    needs: test
     
     permissions:
       contents: write
