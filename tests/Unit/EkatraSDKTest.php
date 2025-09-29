@@ -259,4 +259,179 @@ class EkatraSDKTest extends TestCase
         $this->assertTrue(method_exists(EkatraSDK::class, 'canAutoTransformFlexible'));
         $this->assertTrue(method_exists(EkatraSDK::class, 'getSupportedApiFormats'));
     }
+
+    /**
+     * Test discount auto-calculation when no discount field is provided
+     */
+    public function testDiscountAutoCalculation()
+    {
+        $customerData = [
+            'product_id' => 'auto-calc-test',
+            'title' => 'Auto Calculate Test',
+            'description' => 'Product with no discount field',
+            'currency' => 'USD',
+            'existing_url' => 'https://example.com',
+            'keywords' => 'test,product',
+            'variant_name' => 'test',
+            'variant_mrp' => 100000,      // ₹1,00,000
+            'variant_selling_price' => 80000,  // ₹80,000
+            'variant_quantity' => 1,
+            'size' => 'freestyle'
+            // NO discount field - should auto-calculate
+        ];
+        
+        $result = EkatraSDK::smartTransformProductFlexible($customerData);
+        
+        $this->assertArrayHasKey('data', $result);
+        $this->assertArrayHasKey('variants', $result['data']);
+        $this->assertCount(1, $result['data']['variants']);
+        
+        $variant = $result['data']['variants'][0];
+        $this->assertArrayHasKey('variations', $variant);
+        $this->assertCount(1, $variant['variations']);
+        
+        $variation = $variant['variations'][0];
+        $this->assertArrayHasKey('discount', $variation);
+        
+        // Should auto-calculate: (100000-80000)/100000 * 100 = 20%
+        $this->assertEquals('20', $variation['discount']);
+        $this->assertIsString($variation['discount']);
+    }
+
+    /**
+     * Test discount string preservation when discount field is provided
+     */
+    public function testDiscountStringPreservation()
+    {
+        $customerData = [
+            'product_id' => 'kirtilals-test',
+            'title' => 'Kirtilals Test',
+            'description' => 'Product with discount field',
+            'currency' => 'USD',
+            'existing_url' => 'https://example.com',
+            'keywords' => 'test,product',
+            'variant_name' => 'test',
+            'variant_mrp' => 100000,      // ₹1,00,000
+            'variant_selling_price' => 80000,  // ₹80,000
+            'variant_quantity' => 1,
+            'size' => 'freestyle',
+            'discount' => '15% Off on Dia'  // Discount field provided
+        ];
+        
+        $result = EkatraSDK::smartTransformProductFlexible($customerData);
+        
+        $this->assertArrayHasKey('data', $result);
+        $this->assertArrayHasKey('variants', $result['data']);
+        $this->assertCount(1, $result['data']['variants']);
+        
+        $variant = $result['data']['variants'][0];
+        $this->assertArrayHasKey('variations', $variant);
+        $this->assertCount(1, $variant['variations']);
+        
+        $variation = $variant['variations'][0];
+        $this->assertArrayHasKey('discount', $variation);
+        
+        // Should preserve the exact string provided
+        $this->assertEquals('15% Off on Dia', $variation['discount']);
+        $this->assertIsString($variation['discount']);
+    }
+
+    /**
+     * Test discount string preservation with different formats
+     */
+    public function testDiscountStringFormats()
+    {
+        $testCases = [
+            '50% off on VA',
+            '25% discount',
+            'Upto 30% off',
+            'Buy 2 Get 1',
+            'Flat ₹100 off',
+            '20%',
+            '15.5% off special'
+        ];
+        
+        foreach ($testCases as $discountText) {
+            $customerData = [
+                'product_id' => 'format-test-' . md5($discountText),
+                'title' => 'Format Test',
+                'description' => 'Testing discount format',
+                'currency' => 'USD',
+                'existing_url' => 'https://example.com',
+                'keywords' => 'test,product',
+                'variant_name' => 'test',
+                'variant_mrp' => 100000,
+                'variant_selling_price' => 80000,
+                'variant_quantity' => 1,
+                'size' => 'freestyle',
+                'discount' => $discountText
+            ];
+            
+            $result = EkatraSDK::smartTransformProductFlexible($customerData);
+            
+            $variation = $result['data']['variants'][0]['variations'][0];
+            
+            // Should preserve the exact string provided
+            $this->assertEquals($discountText, $variation['discount'], "Failed for discount: $discountText");
+            $this->assertIsString($variation['discount'], "Discount should be string for: $discountText");
+        }
+    }
+
+    /**
+     * Test numeric discount conversion to string
+     */
+    public function testNumericDiscountConversion()
+    {
+        $customerData = [
+            'product_id' => 'numeric-test',
+            'title' => 'Numeric Discount Test',
+            'description' => 'Product with numeric discount',
+            'currency' => 'USD',
+            'existing_url' => 'https://example.com',
+            'keywords' => 'test,product',
+            'variant_name' => 'test',
+            'variant_mrp' => 100000,
+            'variant_selling_price' => 80000,
+            'variant_quantity' => 1,
+            'size' => 'freestyle',
+            'discount' => 20.0  // Numeric discount
+        ];
+        
+        $result = EkatraSDK::smartTransformProductFlexible($customerData);
+        
+        $variation = $result['data']['variants'][0]['variations'][0];
+        
+        // Should convert numeric to string
+        $this->assertEquals('20', $variation['discount']);
+        $this->assertIsString($variation['discount']);
+    }
+
+    /**
+     * Test discount logic with zero MRP (no auto-calculation)
+     */
+    public function testDiscountWithZeroMRP()
+    {
+        $customerData = [
+            'product_id' => 'zero-mrp-test',
+            'title' => 'Zero MRP Test',
+            'description' => 'Product with zero MRP',
+            'currency' => 'USD',
+            'existing_url' => 'https://example.com',
+            'keywords' => 'test,product',
+            'variant_name' => 'test',
+            'variant_mrp' => 0,  // Zero MRP
+            'variant_selling_price' => 80000,
+            'variant_quantity' => 1,
+            'size' => 'freestyle'
+            // NO discount field
+        ];
+        
+        $result = EkatraSDK::smartTransformProductFlexible($customerData);
+        
+        $variation = $result['data']['variants'][0]['variations'][0];
+        
+        // Should default to '0' when no discount and MRP is 0
+        $this->assertEquals('0', $variation['discount']);
+        $this->assertIsString($variation['discount']);
+    }
 }

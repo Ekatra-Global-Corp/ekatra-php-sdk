@@ -27,7 +27,8 @@ class FlexibleSmartTransformer
         'variant_mrp' => ['variant_mrp', 'mrp', 'compare_at_price', 'regular_price', 'original_price', 'base_price'],
         'variant_selling_price' => ['variant_selling_price', 'selling_price', 'price', 'sale_price'],
         'variant_quantity' => ['variant_quantity', 'quantity', 'stock_quantity', 'inventory_quantity'],
-        'images' => ['image_urls', 'images', 'media_gallery_entries', 'media']
+        'images' => ['image_urls', 'ImageURLs', 'imageUrls', 'images', 'Images', 'media_gallery_entries', 'media'],
+        'discount' => ['discount', 'discount_percent', 'discountPercentage', 'discountAmount', 'discount_text']
     ];
 
     /**
@@ -198,35 +199,35 @@ class FlexibleSmartTransformer
      */
     private function extractImages($data): string
     {
-        // Handle comma-separated string
-        if (isset($data['image_urls']) && is_string($data['image_urls'])) {
-            return $data['image_urls'];
-        }
+        // Handle various image field names (case-insensitive)
+        $imageFields = ['image_urls', 'ImageURLs', 'imageUrls', 'images', 'Images', 'photos', 'pictures'];
         
-        // Handle array of images
-        if (isset($data['images']) && is_array($data['images'])) {
-            $urls = [];
-            foreach ($data['images'] as $image) {
-                if (is_string($image)) {
-                    $urls[] = $image;
-                } elseif (is_array($image) && isset($image['src'])) {
-                    $urls[] = $image['src'];
-                } elseif (is_array($image) && isset($image['file'])) {
-                    $urls[] = $image['file'];
+        foreach ($imageFields as $field) {
+            if (isset($data[$field])) {
+                $value = $data[$field];
+                
+                // Handle comma-separated string
+                if (is_string($value)) {
+                    return $value;
+                }
+                
+                // Handle array of images
+                if (is_array($value)) {
+                    $urls = [];
+                    foreach ($value as $image) {
+                        if (is_string($image)) {
+                            $urls[] = $image;
+                        } elseif (is_array($image) && isset($image['src'])) {
+                            $urls[] = $image['src'];
+                        } elseif (is_array($image) && isset($image['file'])) {
+                            $urls[] = $image['file'];
+                        }
+                    }
+                    if (!empty($urls)) {
+                        return implode(',', $urls);
+                    }
                 }
             }
-            return implode(',', $urls);
-        }
-        
-        // Handle Shopify images
-        if (isset($data['images']) && is_array($data['images'])) {
-            $urls = [];
-            foreach ($data['images'] as $image) {
-                if (isset($image['src'])) {
-                    $urls[] = $image['src'];
-                }
-            }
-            return implode(',', $urls);
         }
         
         return '';
@@ -373,14 +374,30 @@ class FlexibleSmartTransformer
     {
         $variantId = $this->generateId();
         $sizeId = $this->generateId();
-        
         // Try to extract price from various fields
         $price = $this->findValueByFields($data, ['price', 'variant_selling_price', 'selling_price', 'sale_price']);
         $mrp = $this->findValueByFields($data, ['mrp', 'variant_mrp', 'compare_at_price', 'regular_price', 'original_price']);
         
+        // Try to extract discount from various fields
+        $discountValue = $this->findValueByFields($data, ['discount', 'discount_percent', 'discountPercentage', 'discountAmount']);
+        
         // If no price found, use 0
         $price = $price ?: 0;
         $mrp = $mrp ?: $price;
+        
+        // Simple logic: If they provide discount field, use it. Otherwise auto-calculate. Always store as string.
+        if ($discountValue !== null) {
+            // They provided discount field - store as-is (always as string)
+            $discount = (string) $discountValue;
+        } else {
+            // No discount field provided - auto-calculate from MRP vs selling price
+            if ($mrp > 0 && $price < $mrp) {
+                $calculatedDiscount = (($mrp - $price) / $mrp) * 100;
+                $discount = (string) round($calculatedDiscount, 2, PHP_ROUND_HALF_UP);
+            } else {
+                $discount = '0';
+            }
+        }
         
         return [
             '_id' => $variantId,
@@ -390,7 +407,7 @@ class FlexibleSmartTransformer
                     'sizeId' => $sizeId,
                     'mrp' => (string) $mrp,
                     'sellingPrice' => (string) $price,
-                    'discount' => $mrp > $price ? round((($mrp - $price) / $mrp) * 100, 2, PHP_ROUND_HALF_UP) : 0,
+                    'discount' => $discount,
                     'availability' => true,
                     'quantity' => 1,
                     'size' => 'freestyle',
@@ -398,8 +415,8 @@ class FlexibleSmartTransformer
                 ]
             ],
             'weight' => 0,
-            'thumbnail' => '',
-            'mediaList' => []
+            'thumbnail' => $this->extractThumbnail($data),
+            'mediaList' => $this->buildMediaList($data)
         ];
     }
 
@@ -415,11 +432,20 @@ class FlexibleSmartTransformer
         $quantity = $data['variant_quantity'] ?? 0;
         $size = $data['size'] ?? 'freestyle';
         
-        // Calculate discount
-        $discount = 0;
-        if ($mrp > 0 && $sellingPrice < $mrp) {
-            $discount = (($mrp - $sellingPrice) / $mrp) * 100;
-            $discount = round($discount, 2, PHP_ROUND_HALF_UP);
+        // Simple logic: If they provide discount field, use it. Otherwise auto-calculate. Always store as string.
+        $discountValue = $this->findValueByFields($data, ['discount', 'discount_percent', 'discountPercentage', 'discountAmount']);
+        
+        if ($discountValue !== null) {
+            // They provided discount field - store as-is (always as string)
+            $discount = (string) $discountValue;
+        } else {
+            // No discount field provided - auto-calculate from MRP vs selling price
+            if ($mrp > 0 && $sellingPrice < $mrp) {
+                $calculatedDiscount = (($mrp - $sellingPrice) / $mrp) * 100;
+                $discount = (string) round($calculatedDiscount, 2, PHP_ROUND_HALF_UP);
+            } else {
+                $discount = '0';
+            }
         }
         
         $sizeId = $this->generateId();

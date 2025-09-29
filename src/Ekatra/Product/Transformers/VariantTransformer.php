@@ -341,7 +341,10 @@ class VariantTransformer
                 // Transform boolean values
                 if ($targetField === 'availability') {
                     $transformed[$targetField] = (bool) $value;
-                } elseif (in_array($targetField, ['mrp', 'sellingPrice', 'discount', 'quantity'])) {
+                } elseif ($targetField === 'discount') {
+                    // Store discount as-is (always as string)
+                    $transformed[$targetField] = (string) $value;
+                } elseif (in_array($targetField, ['mrp', 'sellingPrice', 'quantity'])) {
                     $transformed[$targetField] = (float) $value;
                 } else {
                     $transformed[$targetField] = $value;
@@ -357,7 +360,7 @@ class VariantTransformer
             if ($mrp > 0 && $sellingPrice < $mrp) {
                 // Use HALF_UP rounding (same as Java BigDecimal)
                 $discount = (($mrp - $sellingPrice) / $mrp) * 100;
-                $transformed['discount'] = round($discount, 2, PHP_ROUND_HALF_UP);
+                $transformed['discount'] = (string) round($discount, 2, PHP_ROUND_HALF_UP);
             }
         }
         
