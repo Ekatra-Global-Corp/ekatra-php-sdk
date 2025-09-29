@@ -2,8 +2,9 @@ name: Safe Release
 
 on:
   push:
+    branches: [ main ]
     tags:
-      - 'v*-rc*'  # Only trigger on release candidate tags
+      - 'v*'
 
 jobs:
   test:
