@@ -28,6 +28,8 @@ class FlexibleSmartTransformer
         'variant_selling_price' => ['variant_selling_price', 'selling_price', 'price', 'sale_price'],
         'variant_quantity' => ['variant_quantity', 'quantity', 'stock_quantity', 'inventory_quantity'],
         'images' => ['image_urls', 'ImageURLs', 'imageUrls', 'images', 'Images', 'media_gallery_entries', 'media'],
+        'variants' => ['variants'],
+        'max_quantity' => ['max_quantity', 'maxQuantity', 'max_purchase_quantity', 'quantity_limit'],
         'discount' => ['discount', 'discount_percent', 'discountPercentage', 'discountAmount', 'discount_text']
     ];
 
@@ -42,7 +44,8 @@ class FlexibleSmartTransformer
         'variant_name' => 'Default Variant',
         'variant_mrp' => 0,
         'variant_selling_price' => 0,
-        'variant_quantity' => 0
+        'variant_quantity' => 0,
+        'max_quantity' => null
     ];
 
     /**
@@ -61,12 +64,16 @@ class FlexibleSmartTransformer
         
         if (!$validation['valid']) {
             return [
-                'success' => false,
+                'status' => 'error',
                 'data' => null,
-                'validation' => $validation,
-                'dataType' => $this->detectDataType($extractedData),
-                'canAutoTransform' => false,
-                'manualSetupRequired' => true
+                'additionalInfo' => [
+                    'validation' => $validation,
+                    'dataType' => $this->detectDataType($extractedData),
+                    'canAutoTransform' => false,
+                    'manualSetupRequired' => true,
+                    'maxQuantity' => null
+                ],
+                'message' => 'Product transformation failed'
             ];
         }
         
@@ -74,12 +81,16 @@ class FlexibleSmartTransformer
         $ekatraData = $this->buildEkatraStructure($mappedData);
         
         return [
-            'success' => true,
+            'status' => 'success',
             'data' => $ekatraData,
-            'validation' => $validation,
-            'dataType' => $this->detectDataType($extractedData),
-            'canAutoTransform' => true,
-            'manualSetupRequired' => false
+            'additionalInfo' => [
+                'validation' => $validation,
+                'dataType' => $this->detectDataType($extractedData),
+                'canAutoTransform' => true,
+                'manualSetupRequired' => false,
+                'maxQuantity' => $this->extractMaxQuantity($mappedData)
+            ],
+            'message' => 'Product details retrieved successfully'
         ];
     }
 
@@ -144,13 +155,13 @@ class FlexibleSmartTransformer
      */
     private function handleSpecialCases($originalData, $mappedData): array
     {
-        // Handle Shopify format
-        if (isset($originalData['variants']) && is_array($originalData['variants'])) {
+        // Handle Shopify format (only for actual Shopify data)
+        if (isset($originalData['variants']) && is_array($originalData['variants']) && $this->isShopifyFormat($originalData)) {
             $mappedData['variants'] = $this->transformShopifyVariants($originalData['variants']);
         }
         
-        // Handle WooCommerce format
-        if (isset($originalData['price']) && isset($originalData['regular_price'])) {
+        // Handle WooCommerce format (only if no variants array exists to avoid conflicts)
+        if (isset($originalData['price']) && isset($originalData['regular_price']) && !isset($originalData['variants'])) {
             $mappedData['variant_mrp'] = $originalData['regular_price'];
             $mappedData['variant_selling_price'] = $originalData['price'];
         }
@@ -182,16 +193,29 @@ class FlexibleSmartTransformer
         
         foreach ($variants as $variant) {
             $transformed[] = [
-                'variant_name' => $variant['title'] ?? 'Default',
-                'variant_mrp' => $variant['compare_at_price'] ?? $variant['price'] ?? 0,
-                'variant_selling_price' => $variant['price'] ?? 0,
-                'variant_quantity' => $variant['inventory_quantity'] ?? 0,
+                'variant_name' => $variant['title'] ?? $variant['name'] ?? 'Default',
+                'variant_mrp' => $this->findValueByFields($variant, ['compare_at_price', 'mrp', 'price']) ?? 0,
+                'variant_selling_price' => $this->findValueByFields($variant, ['price', 'selling_price']) ?? 0,
+                'variant_quantity' => $this->findValueByFields($variant, ['inventory_quantity', 'quantity', 'variant_quantity', 'stock_quantity']) ?? 0,
                 'color' => $this->extractColorFromTitle($variant['title'] ?? ''),
                 'size' => $this->extractSizeFromTitle($variant['title'] ?? '')
             ];
         }
         
         return $transformed;
+    }
+
+    /**
+     * Check if data looks like Shopify format
+     */
+    private function isShopifyFormat($data): bool
+    {
+        // Shopify typically has variants with 'title', 'compare_at_price', 'inventory_quantity'
+        if (isset($data['variants']) && is_array($data['variants']) && !empty($data['variants'])) {
+            $firstVariant = $data['variants'][0];
+            return isset($firstVariant['compare_at_price']) || isset($firstVariant['inventory_quantity']);
+        }
+        return false;
     }
 
     /**
@@ -341,22 +365,20 @@ class FlexibleSmartTransformer
             'sizes' => []
         ];
         
-        // Handle single variant
-        if (isset($data['variant_mrp']) && isset($data['variant_selling_price'])) {
-            $variant = $this->buildSingleVariant($data);
-            $ekatraData['variants'][] = $variant;
-        }
-        
-        // Handle multiple variants
-        if (isset($data['variants']) && is_array($data['variants'])) {
+        // Handle multiple variants (COMPLEX_STRUCTURE format) - PRIORITY
+        if (isset($data['variants']) && is_array($data['variants']) && !empty($data['variants'])) {
             foreach ($data['variants'] as $variantData) {
                 $variant = $this->buildSingleVariant($variantData);
                 $ekatraData['variants'][] = $variant;
             }
         }
-        
+        // Handle single variant (SIMPLE_SINGLE_VARIANT format)
+        elseif (!empty($data['variant_mrp']) && !empty($data['variant_selling_price'])) {
+            $variant = $this->buildSingleVariant($data);
+            $ekatraData['variants'][] = $variant;
+        }
         // Handle minimal format - create default variant if no variant data
-        if (empty($ekatraData['variants'])) {
+        else {
             $defaultVariant = $this->buildDefaultVariant($data);
             $ekatraData['variants'][] = $defaultVariant;
         }
@@ -380,6 +402,9 @@ class FlexibleSmartTransformer
         
         // Try to extract discount from various fields
         $discountValue = $this->findValueByFields($data, ['discount', 'discount_percent', 'discountPercentage', 'discountAmount']);
+        
+        // Try to extract quantity from various fields
+        $quantity = $this->findValueByFields($data, ['variant_quantity', 'quantity', 'stock_quantity', 'inventory_quantity']) ?? 0;
         
         // If no price found, use 0
         $price = $price ?: 0;
@@ -408,15 +433,15 @@ class FlexibleSmartTransformer
                     'mrp' => (string) $mrp,
                     'sellingPrice' => (string) $price,
                     'discount' => $discount,
-                    'availability' => true,
-                    'quantity' => 1,
+                    'availability' => $quantity > 0,
+                    'quantity' => (int) $quantity,
                     'size' => 'freestyle',
                     'variantId' => $variantId
                 ]
             ],
             'weight' => 0,
             'thumbnail' => $this->extractThumbnail($data),
-            'mediaList' => $this->buildMediaList($data)
+            'media' => $this->buildMediaList($data)
         ];
     }
 
@@ -427,10 +452,10 @@ class FlexibleSmartTransformer
     {
         $variantId = $this->generateId();
         $color = $data['color'] ?? 'unknown';
-        $mrp = $data['variant_mrp'] ?? 0;
-        $sellingPrice = $data['variant_selling_price'] ?? 0;
-        $quantity = $data['variant_quantity'] ?? 0;
-        $size = $data['size'] ?? 'freestyle';
+        $mrp = $data['variant_mrp'] ?? $this->findValueByFields($data, ['mrp', 'compare_at_price', 'regular_price', 'original_price']) ?? 0;
+        $sellingPrice = $data['variant_selling_price'] ?? $this->findValueByFields($data, ['selling_price', 'price', 'sale_price']) ?? 0;
+        $quantity = $this->findValueByFields($data, ['variant_quantity', 'quantity', 'stock_quantity', 'inventory_quantity']) ?? 0;
+        $size = $data['size'] ?? $this->findValueByFields($data, ['size']) ?? 'freestyle';
         
         // Simple logic: If they provide discount field, use it. Otherwise auto-calculate. Always store as string.
         $discountValue = $this->findValueByFields($data, ['discount', 'discount_percent', 'discountPercentage', 'discountAmount']);
@@ -467,7 +492,7 @@ class FlexibleSmartTransformer
             ],
             'weight' => $data['weight'] ?? 0,
             'thumbnail' => $this->extractThumbnail($data),
-            'mediaList' => $this->buildMediaList($data)
+            'media' => $this->buildMediaList($data)
         ];
     }
 
@@ -501,8 +526,9 @@ class FlexibleSmartTransformer
             $imageUrl = trim($imageUrl);
             if ($imageUrl) {
                 $mediaList[] = [
-                    'mediaType' => 'IMAGE',
-                    'playUrl' => $imageUrl,
+                    'type' => 'IMAGE',
+                    'url' => $imageUrl,
+                    'thumbnailUrl' => $imageUrl,
                     'mimeType' => 'image/jpeg',
                     'playerTypeEnum' => 'IMAGE',
                     'weight' => 0,
@@ -539,6 +565,22 @@ class FlexibleSmartTransformer
         }
         
         return $sizes;
+    }
+
+    /**
+     * Extract maxQuantity from data
+     * This allows Kirtilals to manually specify quantity limits for certain products
+     */
+    private function extractMaxQuantity($data): ?int
+    {
+        $maxQuantity = $this->findValueByFields($data, ['max_quantity', 'maxQuantity', 'max_purchase_quantity', 'quantity_limit']);
+        
+        if ($maxQuantity !== null && is_numeric($maxQuantity)) {
+            return (int) $maxQuantity;
+        }
+        
+        // If no maxQuantity specified, return null (no limit)
+        return null;
     }
 
     /**

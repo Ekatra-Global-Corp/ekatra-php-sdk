@@ -25,10 +25,10 @@ class EkatraSDKTest extends TestCase
         $result = EkatraSDK::smartTransformProduct($customerData);
         
         $this->assertIsArray($result);
-        $this->assertArrayHasKey('success', $result);
+        $this->assertArrayHasKey('status', $result);
         $this->assertArrayHasKey('data', $result);
-        $this->assertArrayHasKey('validation', $result);
-        $this->assertTrue($result['success']);
+        $this->assertArrayHasKey('additionalInfo', $result);
+        $this->assertEquals('success', $result['status']);
         $this->assertIsArray($result['data']);
         $this->assertEquals('123', $result['data']['productId']);
         $this->assertEquals('Test Product', $result['data']['title']);
@@ -51,6 +51,8 @@ class EkatraSDKTest extends TestCase
         $result = EkatraSDK::smartTransformProduct($customerData);
         
         $this->assertArrayHasKey('data', $result);
+        $this->assertArrayHasKey('additionalInfo', $result);
+        $this->assertArrayHasKey('message', $result);
         $this->assertNotNull($result['data']);
         $this->assertArrayHasKey('variants', $result['data']);
         $this->assertCount(1, $result['data']['variants']);
@@ -198,9 +200,10 @@ class EkatraSDKTest extends TestCase
         $result = EkatraSDK::smartTransformProductFlexible($testData);
         
         $this->assertIsArray($result);
-        $this->assertArrayHasKey('success', $result);
+        $this->assertArrayHasKey('status', $result);
         $this->assertArrayHasKey('data', $result);
-        $this->assertArrayHasKey('canAutoTransform', $result);
+        $this->assertArrayHasKey('additionalInfo', $result);
+        $this->assertArrayHasKey('canAutoTransform', $result['additionalInfo']);
         
         if ($result['success']) {
             $this->assertArrayHasKey('productId', $result['data']);
@@ -220,9 +223,10 @@ class EkatraSDKTest extends TestCase
         $result = EkatraSDK::transformProductFlexible($testData);
         
         $this->assertIsArray($result);
-        $this->assertArrayHasKey('success', $result);
+        $this->assertArrayHasKey('status', $result);
         $this->assertArrayHasKey('data', $result);
-        $this->assertArrayHasKey('canAutoTransform', $result);
+        $this->assertArrayHasKey('additionalInfo', $result);
+        $this->assertArrayHasKey('canAutoTransform', $result['additionalInfo']);
     }
 
     public function testCanAutoTransformFlexible()

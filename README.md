@@ -36,7 +36,7 @@ For older Laravel versions, add the service provider to `config/app.php`:
 
 ## Quick Start
 
-### Smart Auto-Transformation (Recommended)
+### 🚀 Smart Flexible Transformation (v2.0.0 - RECOMMENDED)
 
 ```php
 use Ekatra\Product\EkatraSDK;
@@ -50,25 +50,35 @@ $customerData = [
     'existing_url' => 'https://mystore.com/earrings',
     'product_keywords' => 'earrings,studs',
     'variant_name' => 'earrings',
-    'variant_quantity' => 1,
+    'variant_quantity' => 15,
     'variant_mrp' => 2257,
     'variant_selling_price' => 2118,
+    'max_quantity' => 1,  // ✨ NEW: Set quantity limit for ready-to-ship products
     'image_urls' => 'url1,url2,url3'
 ];
 
-// One line transformation!
-$result = EkatraSDK::smartTransformProduct($customerData);
+// One line transformation with new v2.0.0 structure!
+$result = EkatraSDK::smartTransformProductFlexible($customerData);
 
-if ($result['success']) {
+if ($result['status'] === 'success') {
     // Get your perfectly formatted Ekatra product
     $ekatraProduct = $result['data'];
+    $maxQuantity = $result['additionalInfo']['maxQuantity'];
     echo "✅ Auto-transformed successfully!";
+    echo $maxQuantity ? "Max quantity: $maxQuantity" : "No quantity limit";
 } else {
     // Get clear error guidance
-    foreach ($result['validation']['errors'] as $error) {
+    foreach ($result['additionalInfo']['validation']['errors'] as $error) {
         echo "❌ $error";
     }
 }
+```
+
+### ⚠️ Legacy Method (DEPRECATED - Will be removed in v3.0.0)
+
+```php
+// ❌ DEPRECATED: Use smartTransformProductFlexible() instead
+$result = EkatraSDK::smartTransformProduct($customerData);
 ```
 
 ### Manual Setup (For Complex Requirements)
@@ -250,14 +260,80 @@ $result = EkatraSDK::smartTransformProductFlexible($minimalData);
 
 ### Migration from Old Methods
 
-**Old way (still works):**
+**⚡ Old way (DEPRECATED):**
 ```php
 $result = EkatraSDK::smartTransformProduct($customerData);
+if ($result['success']) { // Old boolean format
+    $data = $result['data'];
+}
 ```
 
-**New way (recommended):**
+**✅ New way (RECOMMENDED):**
 ```php
 $result = EkatraSDK::smartTransformProductFlexible($customerData);
+if ($result['status'] === 'success') { // New string format
+    $data = $result['data'];
+    $validation = $result['additionalInfo']['validation'];
+    $maxQuantity = $result['additionalInfo']['maxQuantity'];
+}
+```
+
+## 🛠️ Response Modification (Option B)
+
+You can easily customize the response for your API needs:
+
+### Basic Response Modification
+
+```php
+use Ekatra\Product\EkatraSDK;
+
+$result = EkatraSDK::smartTransformProductFlexible($customerData);
+
+if ($result['status'] === 'success') {
+    // Modify the response as needed
+    $result['message'] = "Custom success message for API";
+    $result['additionalInfo']['maxQuantity'] = 1; // Override quantity limit
+    $result['additionalInfo']['customField'] = "Custom value";
+    
+    return $result; // Return modified response
+} else {
+    return [
+        'status' => 'error',
+        'message' => 'Custom error message for API',
+        'additionalInfo' => $result['additionalInfo']
+    ];
+}
+```
+
+### Advanced Response Customization
+
+```php
+function transformProductForApi($customerData, $maxQuantity = null, $customMessage = null) {
+    $result = EkatraSDK::smartTransformProductFlexible($customerData);
+    
+    // Extract core data
+    $data = $result['data'];
+    $validation = $result['additionalInfo']['validation'];
+    $dataType = $result['additionalInfo']['dataType'];
+    
+    // Build custom response
+    return [
+        'status' => 'success',
+        'data' => $data,
+        'additionalInfo' => [
+            'validation' => $validation,
+            'dataType' => $dataType,
+            'maxQuantity' => $maxQuantity ?? $result['additionalInfo']['maxQuantity'],
+            'apiVersion' => '2.0.0',
+            'transformedAt' => date('Y-m-d H:i:s'),
+            'customField' => 'Your custom value'
+        ],
+        'message' => $customMessage ?? $result['message']
+    ];
+}
+
+// Usage
+$apiResponse = transformProductForApi($customerData, 1, "Product ready for shipping");
 ```
 
 ### Utility Methods
@@ -294,22 +370,22 @@ $formats = EkatraSDK::getSupportedApiFormats();
 #### Legacy Methods (Still Supported)
 
 ```php
-// Original smart transformation (legacy)
+// ❌ DEPRECATED: Original smart transformation (legacy)
 $result = EkatraSDK::smartTransformProduct($customerData);
 
-// Check if data can be auto-transformed
+// ❌ DEPRECATED: Check if data can be auto-transformed with old transformer
 $canTransform = EkatraSDK::canAutoTransform($customerData);
 
-// Get educational validation
+// ❌ DEPRECATED: Get educational validation
 $validation = EkatraSDK::getEducationalValidation($customerData);
 
-// Get manual setup guide
+// ❌ DEPRECATED: Get manual setup guide
 $guide = EkatraSDK::getManualSetupGuide();
 
-// Get code examples
+// ❌ DEPRECATED: Get code examples
 $examples = EkatraSDK::getCodeExamples();
 
-// Get troubleshooting guide
+// ❌ DEPRECATED: Get troubleshooting guide
 $troubleshooting = EkatraSDK::getTroubleshootingGuide();
 ```
 
@@ -661,7 +737,25 @@ For support and questions:
 - Added missing discount logic to transformSimpleToComplex method
 - Ensures all transformation paths calculate discounts correctly
 
-### Version 1.0.5 - FLEXIBLE API TRANSFORMATION 🚀
+### Version 2.0.0 - V2 API STRUCTURE & QUANTITY FIXES 🚀
+
+#### ✨ New Features
+- **Flattened Response Structure**: Moved validation metadata into `additionalInfo` object
+- **Status Field Enhancement**: Changed `success: boolean` → `status: string`
+- **MaxQuantity Support**: New `maxQuantity` field in `additionalInfo` for quantity limits
+- **Media Object Alignment**: Updated `mediaList` → `media`, `mediaType` → `type`, `playUrl` → `url`
+- **Thumbnail Enhancement**: Added `thumbnailUrl` field within media objects
+- **Quantity Bug Fix**: Fixed issue where `quantity` was showing 0 instead of actual input values
+
+#### 🛠️ Response Structure Changes
+- **Old Structure**: `{success: true, data: {...}, validation: {...}}`
+- **New Structure**: `{status: "success", data: {...}, additionalInfo: {validation: {...}, maxQuantity: number}}`
+
+#### 🔧 New Methods
+- `extractMaxQuantity()` - Extracts quantity limits from input data
+- Enhanced `smartTransformProductFlexible()` - Now returns v2.0.0 structure
+
+### Version 1.0.5 - FLEXIBLE API TRANSFORMATION (PREVIOUS)
 
 #### ✨ New Features
 - **Flexible API Transformation**: New `smartTransformProductFlexible()` method that works with ANY API format

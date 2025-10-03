@@ -11,6 +11,8 @@ simple_test.php
 final_test.php
 test_kirtilals_api.php
 test_*.php
+debug_*.php
+*.cache
 
 # Development files
 install.sh

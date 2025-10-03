@@ -58,23 +58,35 @@ class EkatraSDK
     {
         try {
             $product = EkatraProduct::fromCustomerData($customerData);
-            return $product->toEkatraFormatWithValidation();
+            $result = $product->toEkatraFormatWithValidation();
+        return [
+            'status' => $result['success'] ? 'success' : 'error',
+            'data' => $result['data'],
+            'additionalInfo' => [
+                'validation' => $result['validation']
+            ],
+            'message' => $result['success'] ? 'Product details retrieved successfully' : 'Product validation failed'
+        ];
         } catch (EkatraValidationException $e) {
             return [
-                'success' => false,
+                'status' => 'error',
                 'data' => null,
-                'validation' => [
-                    'valid' => false,
-                    'errors' => $e->getErrors()
+                'additionalInfo' => [
+                    'validation' => [
+                        'valid' => false,
+                        'errors' => $e->getErrors()
+                    ]
                 ],
-                'error' => $e->getMessage()
+                'message' => 'Product validation failed: ' . $e->getMessage()
             ];
         } catch (\Exception $e) {
             return [
-                'success' => false,
+                'status' => 'error',
                 'data' => null,
-                'validation' => null,
-                'error' => $e->getMessage()
+                'additionalInfo' => [
+                    'validation' => null
+                ],
+                'message' => 'Product transformation failed: ' . $e->getMessage()
             ];
         }
     }
@@ -87,23 +99,35 @@ class EkatraSDK
     {
         try {
             $variant = EkatraVariant::fromCustomerData($customerData);
-            return $variant->toEkatraFormatWithValidation();
+            $result = $variant->toEkatraFormatWithValidation();
+            return [
+                'status' => $result['success'] ? 'success' : 'error',
+                'data' => $result['data'],
+                'additionalInfo' => [
+                    'validation' => $result['validation']
+                ],
+                'message' => $result['success'] ? 'Variant details retrieved successfully' : 'Variant validation failed'
+            ];
         } catch (EkatraValidationException $e) {
             return [
-                'success' => false,
+                'status' => 'error',
                 'data' => null,
-                'validation' => [
-                    'valid' => false,
-                    'errors' => $e->getErrors()
+                'additionalInfo' => [
+                    'validation' => [
+                        'valid' => false,
+                        'errors' => $e->getErrors()
+                    ]
                 ],
-                'error' => $e->getMessage()
+                'message' => 'Variant validation failed: ' . $e->getMessage()
             ];
         } catch (\Exception $e) {
             return [
-                'success' => false,
+                'status' => 'error',
                 'data' => null,
-                'validation' => null,
-                'error' => $e->getMessage()
+                'additionalInfo' => [
+                    'validation' => null
+                ],
+                'message' => 'Variant transformation failed: ' . $e->getMessage()
             ];
         }
     }
@@ -187,12 +211,15 @@ class EkatraSDK
         
         if (!$validation['valid']) {
             return [
-                'success' => false,
+                'status' => 'error',
                 'data' => null,
-                'validation' => $validation,
-                'dataType' => $validation['dataType'],
-                'canAutoTransform' => $validation['canAutoTransform'],
-                'manualSetupRequired' => $validation['manualSetupRequired']
+                'additionalInfo' => [
+                    'validation' => $validation,
+                    'dataType' => $validation['dataType'],
+                    'canAutoTransform' => $validation['canAutoTransform'],
+                    'manualSetupRequired' => $validation['manualSetupRequired']
+                ],
+                'message' => 'Product validation failed'
             ];
         }
         
@@ -218,20 +245,29 @@ class EkatraSDK
             }
             
             return [
-                'success' => true,
+                'status' => 'success',
                 'data' => $transformedData,
-                'validation' => $validation,
-                'dataType' => $dataType,
-                'autoTransformed' => in_array($dataType, ['SIMPLE_SINGLE_VARIANT', 'SIMPLE_MULTI_VARIANT'])
+                'additionalInfo' => [
+                    'validation' => $validation,
+                    'dataType' => $dataType,
+                    'autoTransformed' => in_array($dataType, ['SIMPLE_SINGLE_VARIANT', 'SIMPLE_MULTI_VARIANT']),
+                    'canAutoTransform' => true,
+                    'manualSetupRequired' => false
+                ],
+                'message' => 'Product details retrieved successfully'
             ];
             
         } catch (\Exception $e) {
             return [
-                'success' => false,
+                'status' => 'error',
                 'data' => null,
-                'error' => $e->getMessage(),
-                'validation' => $validation,
-                'dataType' => $dataType
+                'additionalInfo' => [
+                    'validation' => $validation,
+                    'dataType' => $dataType,
+                    'canAutoTransform' => false,
+                    'manualSetupRequired' => true
+                ],
+                'message' => 'Product transformation failed: ' . $e->getMessage()
             ];
         }
     }
@@ -355,7 +391,7 @@ class EkatraSDK
     {
         $flexibleTransformer = new FlexibleSmartTransformer();
         $result = $flexibleTransformer->transformToEkatra($customerData);
-        return $result['success'] && $result['canAutoTransform'];
+        return $result['status'] === 'success' && $result['additionalInfo']['canAutoTransform'];
     }
 
     /**

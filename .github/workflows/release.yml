@@ -2,7 +2,6 @@ name: Safe Release
 
 on:
   push:
-    branches: [ main ]
     tags:
       - 'v*'
 
@@ -92,8 +91,7 @@ jobs:
 
     - name: Publish Release
       run: |
-        TAG_NAME=${GITHUB_REF#refs/tags/}
-        gh release edit $TAG_NAME --draft=false
+        gh release edit ${{ github.ref }} --draft=false
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
