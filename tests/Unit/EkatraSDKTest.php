@@ -205,7 +205,7 @@ class EkatraSDKTest extends TestCase
         $this->assertArrayHasKey('additionalInfo', $result);
         $this->assertArrayHasKey('canAutoTransform', $result['additionalInfo']);
         
-        if ($result['success']) {
+        if ($result['status'] === 'success') {
             $this->assertArrayHasKey('productId', $result['data']);
             $this->assertArrayHasKey('title', $result['data']);
             $this->assertArrayHasKey('variants', $result['data']);
