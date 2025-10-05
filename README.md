@@ -38,6 +38,37 @@ For older Laravel versions, add the service provider to `config/app.php`:
 
 ### 🚀 Smart Flexible Transformation (v2.0.0 - RECOMMENDED)
 
+#### For Laravel Users (Option B - Recommended)
+
+```php
+use Ekatra\Product\EkatraSDK;
+
+class ProductController extends Controller
+{
+    public function getProduct($id)
+    {
+        $myProduct = Product::findOrFail($id);
+        
+        // One line transformation!
+        $result = EkatraSDK::smartTransformProductFlexible($myProduct->toArray());
+        
+        if ($result['status'] === 'success') {
+            // Apply your business rules (Option B)
+            $limitedQuantityIds = [20051, 20052, 20053];
+            if (in_array($result['data']['productId'], $limitedQuantityIds)) {
+                $result['additionalInfo']['maxQuantity'] = 1;
+            }
+            
+            return response()->json($result);
+        }
+        
+        return response()->json(['status' => 'error'], 400);
+    }
+}
+```
+
+#### For Direct Usage
+
 ```php
 use Ekatra\Product\EkatraSDK;
 
@@ -160,9 +191,100 @@ if ($result['success']) {
 
 ### Laravel Usage
 
+#### 🚀 Recommended: smartTransformProductFlexible (v2.0.0)
+
 ```php
 use Ekatra\Product\EkatraSDK;
 
+class ProductController extends Controller
+{
+    public function getProduct($id)
+    {
+        $myProduct = Product::findOrFail($id);
+        
+        // Transform using the new flexible method
+        $result = EkatraSDK::smartTransformProductFlexible($myProduct->toArray());
+        
+        if ($result['status'] === 'success') {
+            // Option B: Override maxQuantity based on business logic
+            $limitedQuantityProductIds = [20051, 20052, 20053]; // Products with quantity limits
+            
+            if (in_array($result['data']['productId'], $limitedQuantityProductIds)) {
+                $result['additionalInfo']['maxQuantity'] = 1;
+            }
+            
+            return response()->json($result);
+        } else {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Product transformation failed',
+                'additionalInfo' => $result['additionalInfo']
+            ], 400);
+        }
+    }
+}
+```
+
+#### 🎯 Advanced Laravel Implementation
+
+```php
+class ProductController extends Controller
+{
+    private $limitedQuantityProducts = [
+        'premium' => [20051, 20052],
+        'exclusive' => [30001, 30002],
+        'limited_edition' => [40001, 40002, 40003],
+    ];
+    
+    public function getProduct($id)
+    {
+        $myProduct = Product::findOrFail($id);
+        $result = EkatraSDK::smartTransformProductFlexible($myProduct->toArray());
+        
+        if ($result['status'] === 'success') {
+            // Apply business rules for quantity limits
+            $this->applyQuantityLimits($result);
+            
+            // Add custom API fields
+            $result['apiVersion'] = '2.0.0';
+            $result['transformedAt'] = now()->toISOString();
+            
+            return response()->json($result);
+        }
+        
+        return $this->handleTransformationError($result);
+    }
+    
+    private function applyQuantityLimits(&$result)
+    {
+        $productId = $result['data']['productId'];
+        
+        foreach ($this->limitedQuantityProducts as $category => $ids) {
+            if (in_array($productId, $ids)) {
+                $result['additionalInfo']['maxQuantity'] = 
+                    ($category === 'limited_edition') ? 2 : 1;
+                $result['additionalInfo']['productCategory'] = $category;
+                break;
+            }
+        }
+    }
+    
+    private function handleTransformationError($result)
+    {
+        return response()->json([
+            'status' => 'error',
+            'message' => 'Product transformation failed',
+            'validation' => $result['additionalInfo']['validation'] ?? null,
+            'suggestions' => $result['additionalInfo']['suggestions'] ?? []
+        ], 400);
+    }
+}
+```
+
+#### ⚠️ Legacy Laravel Usage (DEPRECATED)
+
+```php
+// ❌ DEPRECATED: Use smartTransformProductFlexible() instead
 class ProductController extends Controller
 {
     public function getProduct($id)
@@ -278,6 +400,100 @@ if ($result['status'] === 'success') { // New string format
 }
 ```
 
+### 🚀 Laravel Migration Guide
+
+**From Legacy Laravel Usage:**
+```php
+// ❌ OLD: Manual product creation
+$ekatraProduct = EkatraSDK::productFromData($myProduct->toArray());
+return response()->json([
+    'success' => true,
+    'data' => $ekatraProduct->toEkatraFormat()
+]);
+```
+
+**To New Flexible Approach:**
+```php
+// ✅ NEW: One-line transformation with business logic
+$result = EkatraSDK::smartTransformProductFlexible($myProduct->toArray());
+
+if ($result['status'] === 'success') {
+            // Apply your business rules
+            if ($this->hasQuantityLimit($result['data']['productId'])) {
+                $result['additionalInfo']['maxQuantity'] = 1;
+            }
+    
+    return response()->json($result);
+}
+```
+
+**Key Changes:**
+- ✅ Use `smartTransformProductFlexible()` instead of manual product creation
+- ✅ Check `$result['status'] === 'success'` instead of `$result['success']`
+- ✅ Access validation via `$result['additionalInfo']['validation']`
+- ✅ Override `maxQuantity` in `$result['additionalInfo']['maxQuantity']`
+
+## 🛠️ Laravel Implementation Guide (Option B)
+
+### 🎯 Recommended Approach for Laravel Users
+
+The **Option B** approach gives you complete control over quantity limits and business logic:
+
+```php
+use Ekatra\Product\EkatraSDK;
+
+class ProductController extends Controller
+{
+    public function getProduct($id)
+    {
+        $myProduct = Product::findOrFail($id);
+        
+        // Step 1: Transform using SDK
+        $result = EkatraSDK::smartTransformProductFlexible($myProduct->toArray());
+        
+        if ($result['status'] === 'success') {
+            // Step 2: Apply your business rules
+            $this->applyBusinessRules($result);
+            
+            // Step 3: Return customized response
+            return response()->json($result);
+        }
+        
+        return $this->handleError($result);
+    }
+    
+    private function applyBusinessRules(&$result)
+    {
+        $productId = $result['data']['productId'];
+        
+        // Your quantity limit business logic
+        if ($this->hasQuantityLimit($productId)) {
+            $result['additionalInfo']['maxQuantity'] = 1;
+            $result['additionalInfo']['quantityStatus'] = 'limited';
+        }
+        
+        // Add custom fields for your API
+        $result['additionalInfo']['apiVersion'] = '2.0.0';
+        $result['additionalInfo']['processedAt'] = now()->toISOString();
+    }
+    
+    private function hasQuantityLimit($productId)
+    {
+        $limitedQuantityIds = [20051, 20052, 20053, 20054];
+        return in_array($productId, $limitedQuantityIds);
+    }
+}
+```
+
+### 🚀 Benefits of Option B
+
+- ✅ **Complete Control** - You decide which products have quantity limits
+- ✅ **Dynamic Configuration** - Easy to update business rules
+- ✅ **No Data Changes** - No need to modify your product database
+- ✅ **API Flexibility** - Customize response for your frontend needs
+- ✅ **Easy Testing** - Simple to test different scenarios
+- ✅ **Business Logic Separation** - Keep quantity rules separate from product data
+
 ## 🛠️ Response Modification (Option B)
 
 You can easily customize the response for your API needs:
@@ -333,7 +549,7 @@ function transformProductForApi($customerData, $maxQuantity = null, $customMessa
 }
 
 // Usage
-$apiResponse = transformProductForApi($customerData, 1, "Product ready for shipping");
+$apiResponse = transformProductForApi($customerData, 1, "Product with quantity limit applied");
 ```
 
 ### Utility Methods
