@@ -17,11 +17,16 @@ class ServiceProvider extends BaseServiceProvider
      */
     public function register()
     {
+        // Load config only if it exists and is readable
         $configPath = __DIR__ . '/../../config/ekatra.php';
         
-        // Only merge config if the file exists
-        if (file_exists($configPath)) {
-            $this->mergeConfigFrom($configPath, 'ekatra');
+        if (file_exists($configPath) && is_readable($configPath)) {
+            try {
+                $this->mergeConfigFrom($configPath, 'ekatra');
+            } catch (\Exception $e) {
+                // Silently fail if config loading fails
+                // This prevents upgrade issues while still allowing config when possible
+            }
         }
     }
 
@@ -30,13 +35,17 @@ class ServiceProvider extends BaseServiceProvider
      */
     public function boot()
     {
+        // Publish configuration with error handling
         $configPath = __DIR__ . '/../../config/ekatra.php';
         
-        // Publish configuration only if file exists
-        if (file_exists($configPath)) {
-            $this->publishes([
-                $configPath => config_path('ekatra.php'),
-            ], 'ekatra-config');
+        if (file_exists($configPath) && is_readable($configPath)) {
+            try {
+                $this->publishes([
+                    $configPath => config_path('ekatra.php'),
+                ], 'ekatra-config');
+            } catch (\Exception $e) {
+                // Silently fail if config publishing fails
+            }
         }
 
         // Register commands
