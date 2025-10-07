@@ -17,10 +17,12 @@ class ServiceProvider extends BaseServiceProvider
      */
     public function register()
     {
-        $this->mergeConfigFrom(
-            __DIR__ . '/../../config/ekatra.php',
-            'ekatra'
-        );
+        $configPath = __DIR__ . '/../../config/ekatra.php';
+        
+        // Only merge config if the file exists
+        if (file_exists($configPath)) {
+            $this->mergeConfigFrom($configPath, 'ekatra');
+        }
     }
 
     /**
@@ -28,10 +30,14 @@ class ServiceProvider extends BaseServiceProvider
      */
     public function boot()
     {
-        // Publish configuration
-        $this->publishes([
-            __DIR__ . '/../../config/ekatra.php' => config_path('ekatra.php'),
-        ], 'ekatra-config');
+        $configPath = __DIR__ . '/../../config/ekatra.php';
+        
+        // Publish configuration only if file exists
+        if (file_exists($configPath)) {
+            $this->publishes([
+                $configPath => config_path('ekatra.php'),
+            ], 'ekatra-config');
+        }
 
         // Register commands
         if ($this->app->runningInConsole()) {
@@ -40,8 +46,11 @@ class ServiceProvider extends BaseServiceProvider
             ]);
         }
 
-        // Register routes for testing
-        $this->loadRoutesFrom(__DIR__ . '/routes.php');
+        // Register routes for testing only if file exists
+        $routesPath = __DIR__ . '/routes.php';
+        if (file_exists($routesPath)) {
+            $this->loadRoutesFrom($routesPath);
+        }
     }
 
     /**
