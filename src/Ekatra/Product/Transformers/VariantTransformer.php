@@ -165,7 +165,7 @@ class VariantTransformer
     /**
      * Find value by checking multiple possible field names
      */
-    private function findValueByFields(array $data, array $fields): mixed
+    private function findValueByFields(array $data, array $fields)
     {
         foreach ($fields as $field) {
             if (isset($data[$field])) {
@@ -187,7 +187,7 @@ class VariantTransformer
     /**
      * Get nested value from array
      */
-    private function getNestedValue(array $data, string $path): mixed
+    private function getNestedValue(array $data, string $path)
     {
         $keys = explode('.', $path);
         $current = $data;
@@ -205,7 +205,7 @@ class VariantTransformer
     /**
      * Transform value based on field type
      */
-    private function transformValue(string $field, mixed $value): mixed
+    private function transformValue(string $field, $value)
     {
         switch ($field) {
             case 'images':
