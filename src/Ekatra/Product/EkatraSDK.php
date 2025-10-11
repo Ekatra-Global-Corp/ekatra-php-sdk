@@ -168,10 +168,105 @@ class EkatraSDK
 
     /**
      * Get SDK version
+     * Automatically reads from composer.json to avoid manual updates
      */
     public static function version(): string
     {
-        return '1.0.0';
+        // Method 1: Read from local composer.json (development)
+        $composerPath = __DIR__ . '/../../../composer.json';
+        if (file_exists($composerPath)) {
+            try {
+                $composer = json_decode(file_get_contents($composerPath), true);
+                if (isset($composer['version']) && !empty($composer['version'])) {
+                    return $composer['version'];
+                }
+            } catch (\Exception $e) {
+                // Continue to next method
+            }
+        }
+        
+        // Method 2: Read from vendor/composer/installed.json (production)
+        $installedPath = __DIR__ . '/../../../../composer/installed.json';
+        if (file_exists($installedPath)) {
+            try {
+                $installed = json_decode(file_get_contents($installedPath), true);
+                if (isset($installed['packages'])) {
+                    foreach ($installed['packages'] as $package) {
+                        if (isset($package['name']) && $package['name'] === 'ekatra/product-sdk') {
+                            return $package['version'] ?? '2.0.1';
+                        }
+                    }
+                }
+            } catch (\Exception $e) {
+                // Continue to next method
+            }
+        }
+        
+        // Method 3: Try to read from vendor/composer/installed.php (alternative)
+        $installedPhpPath = __DIR__ . '/../../../../composer/installed.php';
+        if (file_exists($installedPhpPath)) {
+            try {
+                $installed = include $installedPhpPath;
+                if (isset($installed['ekatra/product-sdk']['version'])) {
+                    return $installed['ekatra/product-sdk']['version'];
+                }
+            } catch (\Exception $e) {
+                // Continue to fallback
+            }
+        }
+        
+        // Final fallback - this should match composer.json version
+        return '2.0.1';
+    }
+
+    /**
+     * Get detailed version information for debugging
+     */
+    public static function getVersionInfo(): array
+    {
+        $info = [
+            'version' => self::version(),
+            'source' => 'unknown',
+            'composerPath' => null,
+            'installedPath' => null
+        ];
+        
+        // Check composer.json
+        $composerPath = __DIR__ . '/../../../composer.json';
+        if (file_exists($composerPath)) {
+            $info['composerPath'] = $composerPath;
+            try {
+                $composer = json_decode(file_get_contents($composerPath), true);
+                if (isset($composer['version'])) {
+                    $info['source'] = 'composer.json';
+                    $info['composerVersion'] = $composer['version'];
+                }
+            } catch (\Exception $e) {
+                $info['composerError'] = $e->getMessage();
+            }
+        }
+        
+        // Check installed.json
+        $installedPath = __DIR__ . '/../../../../composer/installed.json';
+        if (file_exists($installedPath)) {
+            $info['installedPath'] = $installedPath;
+            try {
+                $installed = json_decode(file_get_contents($installedPath), true);
+                if (isset($installed['packages'])) {
+                    foreach ($installed['packages'] as $package) {
+                        if (isset($package['name']) && $package['name'] === 'ekatra/product-sdk') {
+                            $info['source'] = 'installed.json';
+                            $info['installedVersion'] = $package['version'] ?? 'unknown';
+                            break;
+                        }
+                    }
+                }
+            } catch (\Exception $e) {
+                $info['installedError'] = $e->getMessage();
+            }
+        }
+        
+        return $info;
     }
 
     /**
