@@ -59,14 +59,7 @@ class EkatraSDK
         try {
             $product = EkatraProduct::fromCustomerData($customerData);
             $result = $product->toEkatraFormatWithValidation();
-        return [
-            'status' => $result['success'] ? 'success' : 'error',
-            'data' => $result['data'],
-            'additionalInfo' => [
-                'validation' => $result['validation']
-            ],
-            'message' => $result['success'] ? 'Product details retrieved successfully' : 'Product validation failed'
-        ];
+            return $result; // Core class now returns v2.0.0 structure directly
         } catch (EkatraValidationException $e) {
             return [
                 'status' => 'error',
@@ -100,14 +93,7 @@ class EkatraSDK
         try {
             $variant = EkatraVariant::fromCustomerData($customerData);
             $result = $variant->toEkatraFormatWithValidation();
-            return [
-                'status' => $result['success'] ? 'success' : 'error',
-                'data' => $result['data'],
-                'additionalInfo' => [
-                    'validation' => $result['validation']
-                ],
-                'message' => $result['success'] ? 'Variant details retrieved successfully' : 'Variant validation failed'
-            ];
+            return $result; // Core class now returns v2.0.0 structure directly
         } catch (EkatraValidationException $e) {
             return [
                 'status' => 'error',

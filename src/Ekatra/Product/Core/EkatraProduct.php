@@ -422,16 +422,22 @@ class EkatraProduct
         
         if (!$validation['valid']) {
             return [
-                'success' => false,
+                'status' => 'error',
                 'data' => null,
-                'validation' => $validation
+                'additionalInfo' => [
+                    'validation' => $validation
+                ],
+                'message' => 'Product validation failed'
             ];
         }
         
         return [
-            'success' => true,
+            'status' => 'success',
             'data' => $this->transformer->toEkatraFormat($this),
-            'validation' => $validation
+            'additionalInfo' => [
+                'validation' => $validation
+            ],
+            'message' => 'Product details retrieved successfully'
         ];
     }
 

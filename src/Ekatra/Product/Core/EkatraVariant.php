@@ -323,16 +323,22 @@ class EkatraVariant
         
         if (!$validation['valid']) {
             return [
-                'success' => false,
+                'status' => 'error',
                 'data' => null,
-                'validation' => $validation
+                'additionalInfo' => [
+                    'validation' => $validation
+                ],
+                'message' => 'Variant validation failed'
             ];
         }
         
         return [
-            'success' => true,
+            'status' => 'success',
             'data' => $this->transformer->toEkatraFormat($this),
-            'validation' => $validation
+            'additionalInfo' => [
+                'validation' => $validation
+            ],
+            'message' => 'Variant details retrieved successfully'
         ];
     }
 

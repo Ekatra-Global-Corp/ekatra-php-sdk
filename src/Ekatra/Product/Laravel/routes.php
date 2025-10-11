@@ -24,29 +24,24 @@ if (app()->environment('local', 'testing')) {
             $product = EkatraProduct::fromCustomerData($customerData);
             $result = $product->toEkatraFormatWithValidation();
             
-            return response()->json([
-                'success' => $result['success'],
-                'data' => $result['data'],
-                'validation' => $result['validation'],
-                'message' => $result['success'] 
-                    ? 'Product mapping successful' 
-                    : 'Product mapping failed with validation errors'
-            ]);
+            return response()->json($result); // Core class now returns v2.0.0 structure directly
             
         } catch (EkatraValidationException $e) {
             return response()->json([
-                'success' => false,
+                'status' => 'error',
                 'data' => null,
-                'validation' => [
+                'additionalInfo' => [
+                    'validation' => [
                     'valid' => false,
                     'errors' => $e->getErrors()
+                    ]
                 ],
                 'message' => 'Product validation failed: ' . $e->getMessage()
             ], 400);
             
         } catch (\Exception $e) {
             return response()->json([
-                'success' => false,
+                'status' => 'error',
                 'data' => null,
                 'validation' => null,
                 'message' => 'Error: ' . $e->getMessage()
@@ -64,29 +59,24 @@ if (app()->environment('local', 'testing')) {
             $variant = EkatraVariant::fromCustomerData($customerData);
             $result = $variant->toEkatraFormatWithValidation();
             
-            return response()->json([
-                'success' => $result['success'],
-                'data' => $result['data'],
-                'validation' => $result['validation'],
-                'message' => $result['success'] 
-                    ? 'Variant mapping successful' 
-                    : 'Variant mapping failed with validation errors'
-            ]);
+            return response()->json($result); // Core class now returns v2.0.0 structure directly
             
         } catch (EkatraValidationException $e) {
             return response()->json([
-                'success' => false,
+                'status' => 'error',
                 'data' => null,
-                'validation' => [
+                'additionalInfo' => [
+                    'validation' => [
                     'valid' => false,
                     'errors' => $e->getErrors()
+                    ]
                 ],
                 'message' => 'Variant validation failed: ' . $e->getMessage()
             ], 400);
             
         } catch (\Exception $e) {
             return response()->json([
-                'success' => false,
+                'status' => 'error',
                 'data' => null,
                 'validation' => null,
                 'message' => 'Error: ' . $e->getMessage()
@@ -113,30 +103,26 @@ if (app()->environment('local', 'testing')) {
                 }
             }
             
-            return response()->json([
-                'success' => $result['success'],
-                'data' => $result['data'],
-                'validation' => $result['validation'],
-                'variant_results' => $variantResults,
-                'message' => $result['success'] 
-                    ? 'Complete product mapping successful' 
-                    : 'Complete product mapping failed with validation errors'
-            ]);
+            // Merge variant results into the main result
+            $result['additionalInfo']['variant_results'] = $variantResults;
+            return response()->json($result); // Core class now returns v2.0.0 structure directly
             
         } catch (EkatraValidationException $e) {
             return response()->json([
-                'success' => false,
+                'status' => 'error',
                 'data' => null,
-                'validation' => [
+                'additionalInfo' => [
+                    'validation' => [
                     'valid' => false,
                     'errors' => $e->getErrors()
+                    ]
                 ],
                 'message' => 'Product validation failed: ' . $e->getMessage()
             ], 400);
             
         } catch (\Exception $e) {
             return response()->json([
-                'success' => false,
+                'status' => 'error',
                 'data' => null,
                 'validation' => null,
                 'message' => 'Error: ' . $e->getMessage()
