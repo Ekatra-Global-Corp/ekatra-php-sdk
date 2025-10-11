@@ -174,7 +174,7 @@ jobs:
 
     - name: Publish Release
       run: |
-        gh release edit ${{ github.ref }} --draft=false
+        gh release edit ${{ github.ref_name }} --draft=false
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
