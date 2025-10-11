@@ -79,13 +79,21 @@ jobs:
         foreach (\$tests as \$testName => \$testFunction) {
             try {
                 \$result = \$testFunction();
-                \$checks = [
-                    'Has status' => isset(\$result['status']),
-                    'Has metadata' => isset(\$result['metadata']),
-                    'Has message' => isset(\$result['message']),
-                    'Has SDK version' => isset(\$result['metadata']['sdkVersion']),
-                    'SDK version is 2.0.4' => \$result['metadata']['sdkVersion'] === '2.0.4'
-                ];
+        // Get expected version from composer.json
+        \$composerPath = __DIR__ . '/composer.json';
+        \$expectedVersion = 'unknown';
+        if (file_exists(\$composerPath)) {
+            \$composer = json_decode(file_get_contents(\$composerPath), true);
+            \$expectedVersion = \$composer['version'] ?? 'unknown';
+        }
+        
+        \$checks = [
+            'Has status' => isset(\$result['status']),
+            'Has metadata' => isset(\$result['metadata']),
+            'Has message' => isset(\$result['message']),
+            'Has SDK version' => isset(\$result['metadata']['sdkVersion']),
+            'SDK version matches composer.json' => \$result['metadata']['sdkVersion'] === \$expectedVersion
+        ];
                 
                 \$passed = !in_array(false, \$checks);
                 \$results[\$testName] = \$passed;
@@ -195,9 +203,17 @@ jobs:
             \$checks['Has metadata.' . \$field] = array_key_exists(\$field, \$result['metadata']);
         }
         
+        // Get expected version from composer.json
+        \$composerPath = __DIR__ . '/composer.json';
+        \$expectedVersion = 'unknown';
+        if (file_exists(\$composerPath)) {
+            \$composer = json_decode(file_get_contents(\$composerPath), true);
+            \$expectedVersion = \$composer['version'] ?? 'unknown';
+        }
+        
         \$checks['Status is success'] = \$result['status'] === 'success';
         \$checks['Data is not null'] = \$result['data'] !== null;
-        \$checks['SDK version is 2.0.4'] = \$result['metadata']['sdkVersion'] === '2.0.4';
+        \$checks['SDK version matches composer.json'] = \$result['metadata']['sdkVersion'] === \$expectedVersion;
         
         \$allPassed = true;
         foreach (\$checks as \$checkName => \$passed) {
@@ -273,7 +289,15 @@ jobs:
         
         \$result = EkatraSDK::smartTransformProductFlexible(\$testData);
         
-        if (\$result['status'] === 'success' && \$result['metadata']['sdkVersion'] === '2.0.4') {
+        // Get expected version from composer.json
+        \$composerPath = __DIR__ . '/composer.json';
+        \$expectedVersion = 'unknown';
+        if (file_exists(\$composerPath)) {
+            \$composer = json_decode(file_get_contents(\$composerPath), true);
+            \$expectedVersion = \$composer['version'] ?? 'unknown';
+        }
+        
+        if (\$result['status'] === 'success' && \$result['metadata']['sdkVersion'] === \$expectedVersion) {
             echo '✅ Laravel ' . \$argv[1] . ' compatibility test PASSED' . PHP_EOL;
             exit(0);
         } else {
@@ -429,6 +453,14 @@ jobs:
         
         \$result = EkatraSDK::smartTransformProductFlexible(\$kirtilalsData);
         
+        // Get expected version from composer.json
+        \$composerPath = __DIR__ . '/composer.json';
+        \$expectedVersion = 'unknown';
+        if (file_exists(\$composerPath)) {
+            \$composer = json_decode(file_get_contents(\$composerPath), true);
+            \$expectedVersion = \$composer['version'] ?? 'unknown';
+        }
+        
         \$checks = [
             'Status is success' => \$result['status'] === 'success',
             'Has product ID' => \$result['data']['productId'] === '20051',
@@ -439,7 +471,7 @@ jobs:
             'Media has correct structure' => isset(\$result['data']['variants'][0]['media'][0]['type']) && 
                                           isset(\$result['data']['variants'][0]['media'][0]['url']) &&
                                           isset(\$result['data']['variants'][0]['media'][0]['thumbnailUrl']),
-            'SDK version correct' => \$result['metadata']['sdkVersion'] === '2.0.4'
+            'SDK version correct' => \$result['metadata']['sdkVersion'] === \$expectedVersion
         ];
         
         \$allPassed = true;

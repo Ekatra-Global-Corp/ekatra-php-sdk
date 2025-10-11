@@ -58,6 +58,14 @@ jobs:
             'variant_selling_price' => 800
         ];
         
+        // Get expected version from composer.json
+        \$composerPath = __DIR__ . '/composer.json';
+        \$expectedVersion = 'unknown';
+        if (file_exists(\$composerPath)) {
+            \$composer = json_decode(file_get_contents(\$composerPath), true);
+            \$expectedVersion = \$composer['version'] ?? 'unknown';
+        }
+        
         \$methods = [
             'transformProduct' => function(\$data) { return EkatraSDK::transformProduct(\$data); },
             'transformVariant' => function(\$data) { return EkatraSDK::transformVariant(\$data); },
@@ -73,7 +81,8 @@ jobs:
                     'Has status' => isset(\$result['status']),
                     'Has metadata' => isset(\$result['metadata']),
                     'Has message' => isset(\$result['message']),
-                    'Has SDK version' => isset(\$result['metadata']['sdkVersion'])
+                    'Has SDK version' => isset(\$result['metadata']['sdkVersion']),
+                    'SDK version matches composer.json' => \$result['metadata']['sdkVersion'] === \$expectedVersion
                 ];
                 
                 \$passed = !in_array(false, \$checks);
@@ -125,7 +134,7 @@ jobs:
           This release has passed all tests across PHP 7.4-8.3 and Laravel 6-11, including comprehensive architecture validation.
           
           ### Features:
-          - ✅ Single ResponseBuilder architecture (v2.0.4)
+          - ✅ Single ResponseBuilder architecture (v${{ github.ref_name }})
           - ✅ Consistent response structure across all methods
           - ✅ Robust error handling for all edge cases
           - ✅ Comprehensive test matrix
@@ -143,7 +152,7 @@ jobs:
                   "canAutoTransform": true/false,
                   "manualSetupRequired": true/false,
                   "maxQuantity": number|null,
-                  "sdkVersion": "2.0.4"
+                  "sdkVersion": "${{ github.ref_name }}"
               },
               "message": "Product details retrieved successfully"
           }
@@ -151,7 +160,7 @@ jobs:
           
           ### Installation:
           ```bash
-          composer require ekatra/product-sdk:^2.0.4
+          composer require ekatra/product-sdk:^${{ github.ref_name }}
           ```
 
   publish-release:
