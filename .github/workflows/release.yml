@@ -120,16 +120,11 @@ jobs:
       uses: actions/checkout@v4
 
     - name: Create Draft Release
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        tag_name: ${{ github.ref }}
-        release_name: Release ${{ github.ref }}
-        draft: true
-        prerelease: false
-        body: |
-          ## Release ${{ github.ref }}
+      run: |
+        gh release create ${{ github.ref }} \
+          --title "Release ${{ github.ref }}" \
+          --draft \
+          --notes "## Release ${{ github.ref }}
           
           This release has passed all tests across PHP 7.4-8.3 and Laravel 6-11, including comprehensive architecture validation.
           
@@ -142,26 +137,28 @@ jobs:
           - ✅ Performance and security tests
           
           ### Response Structure:
-          ```json
+          \`\`\`json
           {
-              "status": "success|error",
-              "data": {...},
-              "metadata": {
-                  "validation": {...},
-                  "dataType": "...",
-                  "canAutoTransform": true/false,
-                  "manualSetupRequired": true/false,
-                  "maxQuantity": number|null,
-                  "sdkVersion": "${{ github.ref_name }}"
+              \"status\": \"success|error\",
+              \"data\": {...},
+              \"metadata\": {
+                  \"validation\": {...},
+                  \"dataType\": \"...\",
+                  \"canAutoTransform\": true/false,
+                  \"manualSetupRequired\": true/false,
+                  \"maxQuantity\": number|null,
+                  \"sdkVersion\": \"${{ github.ref_name }}\"
               },
-              "message": "Product details retrieved successfully"
+              \"message\": \"Product details retrieved successfully\"
           }
-          ```
+          \`\`\`
           
           ### Installation:
-          ```bash
+          \`\`\`bash
           composer require ekatra/product-sdk:^${{ github.ref_name }}
-          ```
+          \`\`\`"
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   publish-release:
     runs-on: ubuntu-latest
