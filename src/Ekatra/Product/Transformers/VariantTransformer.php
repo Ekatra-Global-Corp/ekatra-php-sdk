@@ -235,7 +235,7 @@ class VariantTransformer
     /**
      * Transform media array (images/videos)
      */
-    private function transformMediaArray(mixed $value): array
+    private function transformMediaArray($value): array
     {
         if (is_string($value)) {
             // Handle comma-separated strings
@@ -252,7 +252,7 @@ class VariantTransformer
     /**
      * Transform media list
      */
-    private function transformMediaList(mixed $value): array
+    private function transformMediaList($value): array
     {
         if (!is_array($value)) {
             return [];
@@ -301,7 +301,7 @@ class VariantTransformer
     /**
      * Transform variations
      */
-    private function transformVariations(mixed $value): array
+    private function transformVariations($value): array
     {
         if (!is_array($value)) {
             return [];

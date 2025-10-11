@@ -132,7 +132,7 @@ class ProductTransformer
     /**
      * Transform keywords
      */
-    private function transformKeywords(mixed $value): array
+    private function transformKeywords($value): array
     {
         if (is_string($value)) {
             // Handle comma-separated strings
@@ -149,7 +149,7 @@ class ProductTransformer
     /**
      * Transform specifications
      */
-    private function transformSpecifications(mixed $value): array
+    private function transformSpecifications($value): array
     {
         if (!is_array($value)) {
             return [];
@@ -191,7 +191,7 @@ class ProductTransformer
     /**
      * Transform offers
      */
-    private function transformOffers(mixed $value): array
+    private function transformOffers($value): array
     {
         if (!is_array($value)) {
             return [];
@@ -274,7 +274,7 @@ class ProductTransformer
     /**
      * Transform sizes
      */
-    private function transformSizes(mixed $value): array
+    private function transformSizes($value): array
     {
         if (!is_array($value)) {
             return [];
@@ -316,7 +316,7 @@ class ProductTransformer
     /**
      * Transform supported currency
      */
-    private function transformSupportedCurrency(mixed $value): array
+    private function transformSupportedCurrency($value): array
     {
         if (is_string($value)) {
             return array_filter(array_map('trim', explode(',', $value)));
@@ -332,7 +332,7 @@ class ProductTransformer
     /**
      * Transform additional info
      */
-    private function transformAdditionalInfo(mixed $value): array
+    private function transformAdditionalInfo($value): array
     {
         if (is_array($value)) {
             return $value;
@@ -352,7 +352,7 @@ class ProductTransformer
     /**
      * Transform variants
      */
-    private function transformVariants(mixed $value): array
+    private function transformVariants($value): array
     {
         if (!is_array($value)) {
             return [];
