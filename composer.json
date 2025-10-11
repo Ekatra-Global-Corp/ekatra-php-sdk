@@ -47,7 +47,7 @@
         "test-coverage": "phpunit --coverage-html coverage --coverage-clover coverage/coverage.xml",
         "test-unit": "phpunit tests/Unit",
         "test-integration": "phpunit tests/Integration",
-        "test-architecture": "php test_architecture.php",
+        "test-architecture": "php tests/test_architecture.php",
         "test-all": [
             "composer test",
             "composer test-architecture"
