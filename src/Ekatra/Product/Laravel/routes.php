@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use Ekatra\Product\Core\EkatraProduct;
 use Ekatra\Product\Core\EkatraVariant;
 use Ekatra\Product\Exceptions\EkatraValidationException;
+use Ekatra\Product\ResponseBuilder;
 
 /**
  * Ekatra SDK Test Routes
@@ -30,11 +31,12 @@ if (app()->environment('local', 'testing')) {
             return response()->json([
                 'status' => 'error',
                 'data' => null,
-                'additionalInfo' => [
+                'metadata' => [
                     'validation' => [
-                    'valid' => false,
-                    'errors' => $e->getErrors()
-                    ]
+                        'valid' => false,
+                        'errors' => $e->getErrors()
+                    ],
+                    'sdkVersion' => \Ekatra\Product\EkatraSDK::version()
                 ],
                 'message' => 'Product validation failed: ' . $e->getMessage()
             ], 400);
@@ -65,11 +67,12 @@ if (app()->environment('local', 'testing')) {
             return response()->json([
                 'status' => 'error',
                 'data' => null,
-                'additionalInfo' => [
+                'metadata' => [
                     'validation' => [
-                    'valid' => false,
-                    'errors' => $e->getErrors()
-                    ]
+                        'valid' => false,
+                        'errors' => $e->getErrors()
+                    ],
+                    'sdkVersion' => \Ekatra\Product\EkatraSDK::version()
                 ],
                 'message' => 'Variant validation failed: ' . $e->getMessage()
             ], 400);
@@ -111,11 +114,12 @@ if (app()->environment('local', 'testing')) {
             return response()->json([
                 'status' => 'error',
                 'data' => null,
-                'additionalInfo' => [
+                'metadata' => [
                     'validation' => [
-                    'valid' => false,
-                    'errors' => $e->getErrors()
-                    ]
+                        'valid' => false,
+                        'errors' => $e->getErrors()
+                    ],
+                    'sdkVersion' => \Ekatra\Product\EkatraSDK::version()
                 ],
                 'message' => 'Product validation failed: ' . $e->getMessage()
             ], 400);

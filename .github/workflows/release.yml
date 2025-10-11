@@ -38,8 +38,65 @@ jobs:
         rm -f composer.lock
         composer install --prefer-dist --no-progress --no-interaction
 
-    - name: Run tests
+    - name: Run Unit Tests
       run: composer test
+
+    - name: Run Architecture Tests
+      run: |
+        php -r "
+        require 'vendor/autoload.php';
+        use Ekatra\Product\EkatraSDK;
+        
+        echo '=== RELEASE ARCHITECTURE VALIDATION ===' . PHP_EOL;
+        
+        \$testData = [
+            'product_id' => '20051',
+            'title' => 'Test Product',
+            'currency' => 'INR',
+            'variant_quantity' => 5,
+            'variant_mrp' => 1000,
+            'variant_selling_price' => 800
+        ];
+        
+        \$methods = [
+            'transformProduct' => function(\$data) { return EkatraSDK::transformProduct(\$data); },
+            'transformVariant' => function(\$data) { return EkatraSDK::transformVariant(\$data); },
+            'smartTransformProduct' => function(\$data) { return EkatraSDK::smartTransformProduct(\$data); },
+            'smartTransformProductFlexible' => function(\$data) { return EkatraSDK::smartTransformProductFlexible(\$data); }
+        ];
+        
+        \$allPassed = true;
+        foreach (\$methods as \$methodName => \$method) {
+            try {
+                \$result = \$method(\$testData);
+                \$checks = [
+                    'Has status' => isset(\$result['status']),
+                    'Has metadata' => isset(\$result['metadata']),
+                    'Has message' => isset(\$result['message']),
+                    'Has SDK version' => isset(\$result['metadata']['sdkVersion'])
+                ];
+                
+                \$passed = !in_array(false, \$checks);
+                if (!\$passed) {
+                    \$allPassed = false;
+                    echo '❌ ' . \$methodName . ' FAILED' . PHP_EOL;
+                } else {
+                    echo '✅ ' . \$methodName . ' PASSED' . PHP_EOL;
+                }
+            } catch (\Exception \$e) {
+                \$allPassed = false;
+                echo '❌ ' . \$methodName . ' EXCEPTION: ' . \$e->getMessage() . PHP_EOL;
+            }
+        }
+        
+        if (\$allPassed) {
+            echo PHP_EOL . '🎉 RELEASE ARCHITECTURE VALIDATION PASSED!' . PHP_EOL;
+            exit(0);
+        } else {
+            echo PHP_EOL . '❌ RELEASE ARCHITECTURE VALIDATION FAILED!' . PHP_EOL;
+            exit(1);
+        }
+        "
 
   create-draft-release:
     runs-on: ubuntu-latest
@@ -65,16 +122,36 @@ jobs:
         body: |
           ## Release ${{ github.ref }}
           
-          This release has passed all tests across PHP 7.4-8.3 and Laravel 6-11.
+          This release has passed all tests across PHP 7.4-8.3 and Laravel 6-11, including comprehensive architecture validation.
           
           ### Features:
-          - Comprehensive test matrix
-          - Proper job dependencies
-          - Fixed Packagist integration
+          - ✅ Single ResponseBuilder architecture (v2.0.4)
+          - ✅ Consistent response structure across all methods
+          - ✅ Robust error handling for all edge cases
+          - ✅ Comprehensive test matrix
+          - ✅ Architecture validation tests
+          - ✅ Performance and security tests
+          
+          ### Response Structure:
+          ```json
+          {
+              "status": "success|error",
+              "data": {...},
+              "metadata": {
+                  "validation": {...},
+                  "dataType": "...",
+                  "canAutoTransform": true/false,
+                  "manualSetupRequired": true/false,
+                  "maxQuantity": number|null,
+                  "sdkVersion": "2.0.4"
+              },
+              "message": "Product details retrieved successfully"
+          }
+          ```
           
           ### Installation:
           ```bash
-          composer require ekatra/product-sdk:^1.0.8
+          composer require ekatra/product-sdk:^2.0.4
           ```
 
   publish-release:

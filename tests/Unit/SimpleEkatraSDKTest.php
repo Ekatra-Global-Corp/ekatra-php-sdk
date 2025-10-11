@@ -27,7 +27,7 @@ class SimpleEkatraSDKTest extends TestCase
         $this->assertIsArray($result);
         $this->assertArrayHasKey('status', $result);
         $this->assertArrayHasKey('data', $result);
-        $this->assertArrayHasKey('additionalInfo', $result);
+        $this->assertArrayHasKey('metadata', $result);
         $this->assertEquals('success', $result['status']);
         $this->assertIsArray($result['data']);
         $this->assertEquals('123', $result['data']['productId']);
@@ -46,10 +46,10 @@ class SimpleEkatraSDKTest extends TestCase
         
         $this->assertIsArray($result);
         $this->assertArrayHasKey('status', $result);
-        $this->assertArrayHasKey('additionalInfo', $result);
+        $this->assertArrayHasKey('metadata', $result);
         $this->assertEquals('error', $result['status']);
-        $this->assertArrayHasKey('errors', $result['additionalInfo']['validation']);
-        $this->assertNotEmpty($result['additionalInfo']['validation']['errors']);
+        $this->assertArrayHasKey('errors', $result['metadata']['validation']);
+        $this->assertNotEmpty($result['metadata']['validation']['errors']);
     }
 
     public function testCanAutoTransformWithValidData()

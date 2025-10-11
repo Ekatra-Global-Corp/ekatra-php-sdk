@@ -9,6 +9,7 @@ use Ekatra\Product\Transformers\SmartTransformer;
 use Ekatra\Product\Transformers\FlexibleSmartTransformer;
 use Ekatra\Product\Validators\EducationalValidator;
 use Ekatra\Product\Helpers\ManualSetupGuide;
+use Ekatra\Product\ResponseBuilder;
 
 /**
  * EkatraSDK
@@ -54,33 +55,25 @@ class EkatraSDK
      * Transform customer product data to Ekatra format
      * Returns both success status and data
      */
-    public static function transformProduct(array $customerData): array
+    public static function transformProduct($customerData): array
     {
+        // Validate input type
+        if (!is_array($customerData)) {
+            return ResponseBuilder::transformationError(
+                'Invalid input: Expected array, got ' . gettype($customerData)
+            );
+        }
+        
         try {
             $product = EkatraProduct::fromCustomerData($customerData);
-            $result = $product->toEkatraFormatWithValidation();
-            return $result; // Core class now returns v2.0.0 structure directly
+            return $product->toEkatraFormatWithValidation(); // Core class now returns v2.0.0 structure directly
         } catch (EkatraValidationException $e) {
-            return [
-                'status' => 'error',
-                'data' => null,
-                'additionalInfo' => [
-                    'validation' => [
-                        'valid' => false,
-                        'errors' => $e->getErrors()
-                    ]
-                ],
-                'message' => 'Product validation failed: ' . $e->getMessage()
-            ];
+            return ResponseBuilder::validationError([
+                'valid' => false,
+                'errors' => $e->getErrors()
+            ], 'Product validation failed: ' . $e->getMessage());
         } catch (\Exception $e) {
-            return [
-                'status' => 'error',
-                'data' => null,
-                'additionalInfo' => [
-                    'validation' => null
-                ],
-                'message' => 'Product transformation failed: ' . $e->getMessage()
-            ];
+            return ResponseBuilder::transformationError('Product transformation failed: ' . $e->getMessage());
         }
     }
 
@@ -88,33 +81,25 @@ class EkatraSDK
      * Transform customer variant data to Ekatra format
      * Returns both success status and data
      */
-    public static function transformVariant(array $customerData): array
+    public static function transformVariant($customerData): array
     {
+        // Validate input type
+        if (!is_array($customerData)) {
+            return ResponseBuilder::transformationError(
+                'Invalid input: Expected array, got ' . gettype($customerData)
+            );
+        }
+        
         try {
             $variant = EkatraVariant::fromCustomerData($customerData);
-            $result = $variant->toEkatraFormatWithValidation();
-            return $result; // Core class now returns v2.0.0 structure directly
+            return $variant->toEkatraFormatWithValidation(); // Core class now returns v2.0.0 structure directly
         } catch (EkatraValidationException $e) {
-            return [
-                'status' => 'error',
-                'data' => null,
-                'additionalInfo' => [
-                    'validation' => [
-                        'valid' => false,
-                        'errors' => $e->getErrors()
-                    ]
-                ],
-                'message' => 'Variant validation failed: ' . $e->getMessage()
-            ];
+            return ResponseBuilder::validationError([
+                'valid' => false,
+                'errors' => $e->getErrors()
+            ], 'Variant validation failed: ' . $e->getMessage());
         } catch (\Exception $e) {
-            return [
-                'status' => 'error',
-                'data' => null,
-                'additionalInfo' => [
-                    'validation' => null
-                ],
-                'message' => 'Variant transformation failed: ' . $e->getMessage()
-            ];
+            return ResponseBuilder::transformationError('Variant transformation failed: ' . $e->getMessage());
         }
     }
 
@@ -291,17 +276,7 @@ class EkatraSDK
         $validation = $educationalValidator->validateWithGuidance($customerData);
         
         if (!$validation['valid']) {
-            return [
-                'status' => 'error',
-                'data' => null,
-                'additionalInfo' => [
-                    'validation' => $validation,
-                    'dataType' => $validation['dataType'],
-                    'canAutoTransform' => $validation['canAutoTransform'],
-                    'manualSetupRequired' => $validation['manualSetupRequired']
-                ],
-                'message' => 'Product validation failed'
-            ];
+            return ResponseBuilder::validationError($validation, 'Product validation failed');
         }
         
         // Detect data type and transform accordingly
@@ -325,31 +300,28 @@ class EkatraSDK
                     throw new \Exception("Unknown data type: $dataType");
             }
             
-            return [
-                'status' => 'success',
-                'data' => $transformedData,
-                'additionalInfo' => [
+            return ResponseBuilder::success(
+                $transformedData,
+                [
                     'validation' => $validation,
                     'dataType' => $dataType,
                     'autoTransformed' => in_array($dataType, ['SIMPLE_SINGLE_VARIANT', 'SIMPLE_MULTI_VARIANT']),
                     'canAutoTransform' => true,
                     'manualSetupRequired' => false
                 ],
-                'message' => 'Product details retrieved successfully'
-            ];
+                'Product details retrieved successfully'
+            );
             
         } catch (\Exception $e) {
-            return [
-                'status' => 'error',
-                'data' => null,
-                'additionalInfo' => [
+            return ResponseBuilder::transformationError(
+                'Product transformation failed: ' . $e->getMessage(),
+                [
                     'validation' => $validation,
                     'dataType' => $dataType,
                     'canAutoTransform' => false,
                     'manualSetupRequired' => true
-                ],
-                'message' => 'Product transformation failed: ' . $e->getMessage()
-            ];
+                ]
+            );
         }
     }
 
@@ -442,10 +414,23 @@ class EkatraSDK
      * @param array $customerData The customer's product data in any format
      * @return array Transformation result with success/error status
      */
-    public static function smartTransformProductFlexible(array $customerData): array
+    public static function smartTransformProductFlexible($customerData): array
     {
-        $flexibleTransformer = new FlexibleSmartTransformer();
-        return $flexibleTransformer->transformToEkatra($customerData);
+        // Validate input type
+        if (!is_array($customerData)) {
+            return ResponseBuilder::transformationError(
+                'Invalid input: Expected array, got ' . gettype($customerData)
+            );
+        }
+        
+        try {
+            $flexibleTransformer = new FlexibleSmartTransformer();
+            return $flexibleTransformer->transformToEkatra($customerData);
+        } catch (\Exception $e) {
+            return ResponseBuilder::transformationError(
+                'Product transformation failed: ' . $e->getMessage()
+            );
+        }
     }
 
     /**
@@ -472,7 +457,7 @@ class EkatraSDK
     {
         $flexibleTransformer = new FlexibleSmartTransformer();
         $result = $flexibleTransformer->transformToEkatra($customerData);
-        return $result['status'] === 'success' && $result['additionalInfo']['canAutoTransform'];
+        return $result['status'] === 'success' && $result['metadata']['canAutoTransform'];
     }
 
     /**

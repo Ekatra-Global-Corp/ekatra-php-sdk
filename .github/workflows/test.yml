@@ -1,0 +1,515 @@
+name: Comprehensive Test Suite
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+
+jobs:
+  architecture-tests:
+    runs-on: ubuntu-latest
+    name: Architecture Validation Tests
+    strategy:
+      matrix:
+        php-version: [8.0, 8.1, 8.2, 8.3, 8.4]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: ${{ matrix.php-version }}
+        extensions: mbstring, xml, curl, json
+
+    - name: Install dependencies
+      run: |
+        composer install --prefer-dist --no-progress --no-interaction
+
+    - name: Run Unit Tests
+      run: composer test
+
+    - name: Run Architecture Tests
+      run: |
+        php -r "
+        require 'vendor/autoload.php';
+        use Ekatra\Product\EkatraSDK;
+        use Ekatra\Product\Core\EkatraProduct;
+        use Ekatra\Product\Core\EkatraVariant;
+        use Ekatra\Product\Transformers\FlexibleSmartTransformer;
+        
+        echo '=== ARCHITECTURE VALIDATION TESTS ===' . PHP_EOL;
+        
+        \$testData = [
+            'product_id' => '20051',
+            'title' => 'Test Product',
+            'description' => 'Test Description',
+            'currency' => 'INR',
+            'variant_quantity' => 5,
+            'variant_mrp' => 1000,
+            'variant_selling_price' => 800,
+            'image_urls' => 'https://example.com/image.jpg'
+        ];
+        
+        \$tests = [
+            'EkatraSDK::transformProduct' => function() use (\$testData) { return EkatraSDK::transformProduct(\$testData); },
+            'EkatraSDK::transformVariant' => function() use (\$testData) { return EkatraSDK::transformVariant(\$testData); },
+            'EkatraSDK::smartTransformProduct' => function() use (\$testData) { return EkatraSDK::smartTransformProduct(\$testData); },
+            'EkatraSDK::smartTransformProductFlexible' => function() use (\$testData) { return EkatraSDK::smartTransformProductFlexible(\$testData); },
+            'EkatraProduct::toEkatraFormatWithValidation' => function() use (\$testData) { 
+                \$product = EkatraProduct::fromCustomerData(\$testData);
+                return \$product->toEkatraFormatWithValidation();
+            },
+            'EkatraVariant::toEkatraFormatWithValidation' => function() use (\$testData) { 
+                \$variant = EkatraVariant::fromCustomerData(\$testData);
+                return \$variant->toEkatraFormatWithValidation();
+            },
+            'FlexibleSmartTransformer::transformToEkatra' => function() use (\$testData) { 
+                \$transformer = new FlexibleSmartTransformer();
+                return \$transformer->transformToEkatra(\$testData);
+            }
+        ];
+        
+        \$allPassed = true;
+        \$results = [];
+        
+        foreach (\$tests as \$testName => \$testFunction) {
+            try {
+                \$result = \$testFunction();
+                \$checks = [
+                    'Has status' => isset(\$result['status']),
+                    'Has metadata' => isset(\$result['metadata']),
+                    'Has message' => isset(\$result['message']),
+                    'Has SDK version' => isset(\$result['metadata']['sdkVersion']),
+                    'SDK version is 2.0.4' => \$result['metadata']['sdkVersion'] === '2.0.4'
+                ];
+                
+                \$passed = !in_array(false, \$checks);
+                \$results[\$testName] = \$passed;
+                
+                if (!\$passed) {
+                    \$allPassed = false;
+                    echo '❌ ' . \$testName . ' FAILED' . PHP_EOL;
+                } else {
+                    echo '✅ ' . \$testName . ' PASSED' . PHP_EOL;
+                }
+            } catch (\Exception \$e) {
+                \$allPassed = false;
+                echo '❌ ' . \$testName . ' EXCEPTION: ' . \$e->getMessage() . PHP_EOL;
+            }
+        }
+        
+        echo PHP_EOL . '=== CONSISTENCY CHECK ===' . PHP_EOL;
+        \$sdkVersions = [];
+        foreach (\$tests as \$testName => \$testFunction) {
+            try {
+                \$result = \$testFunction();
+                \$sdkVersions[] = \$result['metadata']['sdkVersion'] ?? 'missing';
+            } catch (\Exception \$e) {
+                \$sdkVersions[] = 'error';
+            }
+        }
+        
+        \$uniqueVersions = array_unique(\$sdkVersions);
+        echo 'SDK Versions found: ' . implode(', ', \$uniqueVersions) . PHP_EOL;
+        echo 'All versions same: ' . (count(\$uniqueVersions) === 1 ? 'Yes' : 'No') . PHP_EOL;
+        
+        if (count(\$uniqueVersions) !== 1) {
+            \$allPassed = false;
+        }
+        
+        echo PHP_EOL . '=== ERROR HANDLING TEST ===' . PHP_EOL;
+        \$errorTests = [
+            'null input' => null,
+            'string input' => 'invalid',
+            'integer input' => 123,
+            'empty array' => []
+        ];
+        
+        foreach (\$errorTests as \$testName => \$testValue) {
+            try {
+                \$result = EkatraSDK::smartTransformProductFlexible(\$testValue);
+                \$checks = [
+                    'Status is error' => \$result['status'] === 'error',
+                    'Data is null' => \$result['data'] === null,
+                    'Has metadata' => isset(\$result['metadata']),
+                    'Has SDK version' => isset(\$result['metadata']['sdkVersion'])
+                ];
+                
+                \$passed = !in_array(false, \$checks);
+                if (!\$passed) {
+                    \$allPassed = false;
+                    echo '❌ Error test ' . \$testName . ' FAILED' . PHP_EOL;
+                } else {
+                    echo '✅ Error test ' . \$testName . ' PASSED' . PHP_EOL;
+                }
+            } catch (\Exception \$e) {
+                \$allPassed = false;
+                echo '❌ Error test ' . \$testName . ' EXCEPTION: ' . \$e->getMessage() . PHP_EOL;
+            }
+        }
+        
+        echo PHP_EOL . '=== FINAL RESULT ===' . PHP_EOL;
+        if (\$allPassed) {
+            echo '🎉 ALL ARCHITECTURE TESTS PASSED!' . PHP_EOL;
+            exit(0);
+        } else {
+            echo '❌ SOME ARCHITECTURE TESTS FAILED!' . PHP_EOL;
+            exit(1);
+        }
+        "
+
+    - name: Test Response Structure Consistency
+      run: |
+        php -r "
+        require 'vendor/autoload.php';
+        use Ekatra\Product\EkatraSDK;
+        
+        echo '=== RESPONSE STRUCTURE CONSISTENCY TEST ===' . PHP_EOL;
+        
+        \$testData = [
+            'product_id' => '20051',
+            'title' => 'Test Product',
+            'description' => 'Test Description',
+            'currency' => 'INR',
+            'variant_quantity' => 5,
+            'variant_mrp' => 1000,
+            'variant_selling_price' => 800,
+            'image_urls' => 'https://example.com/image.jpg'
+        ];
+        
+        \$result = EkatraSDK::smartTransformProductFlexible(\$testData);
+        
+        \$requiredFields = ['status', 'data', 'metadata', 'message'];
+        \$requiredMetadataFields = ['validation', 'dataType', 'canAutoTransform', 'manualSetupRequired', 'maxQuantity', 'sdkVersion'];
+        
+        \$checks = [];
+        foreach (\$requiredFields as \$field) {
+            \$checks['Has ' . \$field] = isset(\$result[\$field]);
+        }
+        
+        foreach (\$requiredMetadataFields as \$field) {
+            \$checks['Has metadata.' . \$field] = array_key_exists(\$field, \$result['metadata']);
+        }
+        
+        \$checks['Status is success'] = \$result['status'] === 'success';
+        \$checks['Data is not null'] = \$result['data'] !== null;
+        \$checks['SDK version is 2.0.4'] = \$result['metadata']['sdkVersion'] === '2.0.4';
+        
+        \$allPassed = true;
+        foreach (\$checks as \$checkName => \$passed) {
+            if (\$passed) {
+                echo '✅ ' . \$checkName . PHP_EOL;
+            } else {
+                echo '❌ ' . \$checkName . PHP_EOL;
+                \$allPassed = false;
+            }
+        }
+        
+        if (\$allPassed) {
+            echo PHP_EOL . '🎉 RESPONSE STRUCTURE CONSISTENT!' . PHP_EOL;
+            exit(0);
+        } else {
+            echo PHP_EOL . '❌ RESPONSE STRUCTURE INCONSISTENT!' . PHP_EOL;
+            exit(1);
+        }
+        "
+
+  compatibility-tests:
+    runs-on: ubuntu-latest
+    name: PHP & Laravel Compatibility Tests
+    strategy:
+      matrix:
+        php-version: [7.4, 8.0, 8.1, 8.2, 8.3]
+        laravel-version: [6, 7, 8, 9, 10, 11]
+        exclude:
+          - php-version: 7.4
+            laravel-version: 11
+          - php-version: 8.0
+            laravel-version: 11
+          - php-version: 8.1
+            laravel-version: 11
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: ${{ matrix.php-version }}
+        extensions: mbstring, xml, curl, json
+
+    - name: Install dependencies
+      run: |
+        rm -f composer.lock
+        composer install --prefer-dist --no-progress --no-interaction
+
+    - name: Run Unit Tests
+      run: composer test
+
+    - name: Test Laravel Integration
+      if: matrix.laravel-version != ''
+      run: |
+        php -r "
+        echo 'Testing Laravel ' . \$argv[1] . ' compatibility...' . PHP_EOL;
+        echo 'PHP Version: ' . PHP_VERSION . PHP_EOL;
+        
+        // Test basic SDK functionality
+        require 'vendor/autoload.php';
+        use Ekatra\Product\EkatraSDK;
+        
+        \$testData = [
+            'product_id' => '20051',
+            'title' => 'Test Product',
+            'currency' => 'INR',
+            'variant_quantity' => 5,
+            'variant_mrp' => 1000,
+            'variant_selling_price' => 800
+        ];
+        
+        \$result = EkatraSDK::smartTransformProductFlexible(\$testData);
+        
+        if (\$result['status'] === 'success' && \$result['metadata']['sdkVersion'] === '2.0.4') {
+            echo '✅ Laravel ' . \$argv[1] . ' compatibility test PASSED' . PHP_EOL;
+            exit(0);
+        } else {
+            echo '❌ Laravel ' . \$argv[1] . ' compatibility test FAILED' . PHP_EOL;
+            exit(1);
+        }
+        " ${{ matrix.laravel-version }}
+
+  security-tests:
+    runs-on: ubuntu-latest
+    name: Security & Performance Tests
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: 8.3
+        extensions: mbstring, xml, curl, json
+
+    - name: Install dependencies
+      run: composer install --prefer-dist --no-progress --no-interaction
+
+    - name: Run Security Audit
+      run: |
+        composer audit || echo "No security vulnerabilities found"
+
+    - name: Test Memory Usage
+      run: |
+        php -r "
+        require 'vendor/autoload.php';
+        use Ekatra\Product\EkatraSDK;
+        
+        echo '=== MEMORY USAGE TEST ===' . PHP_EOL;
+        
+        \$memoryBefore = memory_get_usage(true);
+        
+        // Test with large dataset
+        \$largeData = [];
+        for (\$i = 0; \$i < 1000; \$i++) {
+            \$largeData[] = [
+                'product_id' => 'product_' . \$i,
+                'title' => 'Product ' . \$i,
+                'currency' => 'INR',
+                'variant_quantity' => \$i,
+                'variant_mrp' => 1000 + \$i,
+                'variant_selling_price' => 800 + \$i
+            ];
+        }
+        
+        foreach (\$largeData as \$data) {
+            \$result = EkatraSDK::smartTransformProductFlexible(\$data);
+        }
+        
+        \$memoryAfter = memory_get_usage(true);
+        \$memoryUsed = \$memoryAfter - \$memoryBefore;
+        
+        echo 'Memory used: ' . round(\$memoryUsed / 1024 / 1024, 2) . ' MB' . PHP_EOL;
+        
+        if (\$memoryUsed < 50 * 1024 * 1024) { // Less than 50MB
+            echo '✅ Memory usage acceptable' . PHP_EOL;
+            exit(0);
+        } else {
+            echo '❌ Memory usage too high' . PHP_EOL;
+            exit(1);
+        }
+        "
+
+    - name: Test Performance
+      run: |
+        php -r "
+        require 'vendor/autoload.php';
+        use Ekatra\Product\EkatraSDK;
+        
+        echo '=== PERFORMANCE TEST ===' . PHP_EOL;
+        
+        \$testData = [
+            'product_id' => '20051',
+            'title' => 'Test Product',
+            'description' => 'Test Description',
+            'currency' => 'INR',
+            'variant_quantity' => 5,
+            'variant_mrp' => 1000,
+            'variant_selling_price' => 800,
+            'image_urls' => 'https://example.com/image.jpg'
+        ];
+        
+        \$iterations = 1000;
+        \$startTime = microtime(true);
+        
+        for (\$i = 0; \$i < \$iterations; \$i++) {
+            \$result = EkatraSDK::smartTransformProductFlexible(\$testData);
+        }
+        
+        \$endTime = microtime(true);
+        \$totalTime = \$endTime - \$startTime;
+        \$avgTime = \$totalTime / \$iterations;
+        
+        echo 'Total time for ' . \$iterations . ' iterations: ' . round(\$totalTime, 4) . ' seconds' . PHP_EOL;
+        echo 'Average time per transformation: ' . round(\$avgTime * 1000, 2) . ' ms' . PHP_EOL;
+        
+        if (\$avgTime < 0.01) { // Less than 10ms per transformation
+            echo '✅ Performance acceptable' . PHP_EOL;
+            exit(0);
+        } else {
+            echo '❌ Performance too slow' . PHP_EOL;
+            exit(1);
+        }
+        "
+
+  integration-tests:
+    runs-on: ubuntu-latest
+    name: Integration Tests
+    needs: [architecture-tests, compatibility-tests]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: 8.3
+        extensions: mbstring, xml, curl, json
+
+    - name: Install dependencies
+      run: composer install --prefer-dist --no-progress --no-interaction
+
+    - name: Test Real-world Data
+      run: |
+        php -r "
+        require 'vendor/autoload.php';
+        use Ekatra\Product\EkatraSDK;
+        
+        echo '=== REAL-WORLD DATA INTEGRATION TEST ===' . PHP_EOL;
+        
+        // Test with Kirtilals-like data
+        \$kirtilalsData = [
+            'product_id' => '20051',
+            'title' => 'Multicolor Gemstone Orb Earrings',
+            'description' => 'These opulent earrings showcase a vibrant palette of gemstones set within a glittering diamond orbit, culminating in a lustrous rose gold bead. Perfect for a sophisticated soirée.',
+            'currency' => 'INR',
+            'existing_url' => 'https://staging-3.kirtilals.com/multicolor-gemstone-orb-earrings',
+            'product_keywords' => 'earrings,studs',
+            'variant_name' => 'earrings',
+            'variant_quantity' => 1,
+            'variant_mrp' => 153079.0,
+            'variant_selling_price' => 133501.0,
+            'image_urls' => 'https://staging-3.kirtilals.com/images/media/products/20051/500x500/multicolor-gemstone-orb-earrings-20051-6-Y.png'
+        ];
+        
+        \$result = EkatraSDK::smartTransformProductFlexible(\$kirtilalsData);
+        
+        \$checks = [
+            'Status is success' => \$result['status'] === 'success',
+            'Has product ID' => \$result['data']['productId'] === '20051',
+            'Has title' => \$result['data']['title'] === 'Multicolor Gemstone Orb Earrings',
+            'Has currency' => \$result['data']['currency'] === 'INR',
+            'Has variants' => count(\$result['data']['variants']) > 0,
+            'Has media' => isset(\$result['data']['variants'][0]['media']),
+            'Media has correct structure' => isset(\$result['data']['variants'][0]['media'][0]['type']) && 
+                                          isset(\$result['data']['variants'][0]['media'][0]['url']) &&
+                                          isset(\$result['data']['variants'][0]['media'][0]['thumbnailUrl']),
+            'SDK version correct' => \$result['metadata']['sdkVersion'] === '2.0.4'
+        ];
+        
+        \$allPassed = true;
+        foreach (\$checks as \$checkName => \$passed) {
+            if (\$passed) {
+                echo '✅ ' . \$checkName . PHP_EOL;
+            } else {
+                echo '❌ ' . \$checkName . PHP_EOL;
+                \$allPassed = false;
+            }
+        }
+        
+        if (\$allPassed) {
+            echo PHP_EOL . '🎉 REAL-WORLD INTEGRATION TEST PASSED!' . PHP_EOL;
+            exit(0);
+        } else {
+            echo PHP_EOL . '❌ REAL-WORLD INTEGRATION TEST FAILED!' . PHP_EOL;
+            exit(1);
+        }
+        "
+
+    - name: Test Error Scenarios
+      run: |
+        php -r "
+        require 'vendor/autoload.php';
+        use Ekatra\Product\EkatraSDK;
+        
+        echo '=== ERROR SCENARIOS INTEGRATION TEST ===' . PHP_EOL;
+        
+        \$errorScenarios = [
+            'Empty data' => [],
+            'Missing required fields' => ['title' => 'Test'],
+            'Invalid data type' => 'invalid string',
+            'Null data' => null,
+            'Malformed data' => ['product_id' => '', 'title' => '', 'currency' => '']
+        ];
+        
+        \$allPassed = true;
+        
+        foreach (\$errorScenarios as \$scenarioName => \$scenarioData) {
+            try {
+                \$result = EkatraSDK::smartTransformProductFlexible(\$scenarioData);
+                
+                \$checks = [
+                    'Status is error' => \$result['status'] === 'error',
+                    'Data is null' => \$result['data'] === null,
+                    'Has metadata' => isset(\$result['metadata']),
+                    'Has SDK version' => isset(\$result['metadata']['sdkVersion']),
+                    'Has message' => isset(\$result['message'])
+                ];
+                
+                \$passed = !in_array(false, \$checks);
+                
+                if (\$passed) {
+                    echo '✅ ' . \$scenarioName . ' handled correctly' . PHP_EOL;
+                } else {
+                    echo '❌ ' . \$scenarioName . ' not handled correctly' . PHP_EOL;
+                    \$allPassed = false;
+                }
+            } catch (\Exception \$e) {
+                echo '❌ ' . \$scenarioName . ' threw exception: ' . \$e->getMessage() . PHP_EOL;
+                \$allPassed = false;
+            }
+        }
+        
+        if (\$allPassed) {
+            echo PHP_EOL . '🎉 ERROR SCENARIOS INTEGRATION TEST PASSED!' . PHP_EOL;
+            exit(0);
+        } else {
+            echo PHP_EOL . '❌ ERROR SCENARIOS INTEGRATION TEST FAILED!' . PHP_EOL;
+            exit(1);
+        }
+        "

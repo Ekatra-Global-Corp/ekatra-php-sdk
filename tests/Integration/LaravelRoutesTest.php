@@ -19,7 +19,7 @@ class LaravelRoutesTest extends TestCase
         $this->assertIsArray($result);
         $this->assertArrayHasKey('status', $result);
         $this->assertArrayHasKey('data', $result);
-        $this->assertArrayHasKey('additionalInfo', $result);
+        $this->assertArrayHasKey('metadata', $result);
         $this->assertArrayHasKey('message', $result);
         
         // Should NOT have old v1.0.0 structure
@@ -41,7 +41,7 @@ class LaravelRoutesTest extends TestCase
         $this->assertIsArray($result);
         $this->assertArrayHasKey('status', $result);
         $this->assertArrayHasKey('data', $result);
-        $this->assertArrayHasKey('additionalInfo', $result);
+        $this->assertArrayHasKey('metadata', $result);
         $this->assertArrayHasKey('message', $result);
         
         // Should NOT have old v1.0.0 structure
@@ -71,7 +71,7 @@ class LaravelRoutesTest extends TestCase
         foreach ([$productResult, $variantResult] as $result) {
             $this->assertArrayHasKey('status', $result);
             $this->assertArrayHasKey('data', $result);
-            $this->assertArrayHasKey('additionalInfo', $result);
+            $this->assertArrayHasKey('metadata', $result);
             $this->assertArrayHasKey('message', $result);
             $this->assertArrayNotHasKey('success', $result);
         }

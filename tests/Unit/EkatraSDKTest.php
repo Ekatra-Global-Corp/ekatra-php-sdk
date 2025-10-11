@@ -27,7 +27,7 @@ class EkatraSDKTest extends TestCase
         $this->assertIsArray($result);
         $this->assertArrayHasKey('status', $result);
         $this->assertArrayHasKey('data', $result);
-        $this->assertArrayHasKey('additionalInfo', $result);
+        $this->assertArrayHasKey('metadata', $result);
         $this->assertEquals('success', $result['status']);
         $this->assertIsArray($result['data']);
         $this->assertEquals('123', $result['data']['productId']);
@@ -51,7 +51,7 @@ class EkatraSDKTest extends TestCase
         $result = EkatraSDK::smartTransformProduct($customerData);
         
         $this->assertArrayHasKey('data', $result);
-        $this->assertArrayHasKey('additionalInfo', $result);
+        $this->assertArrayHasKey('metadata', $result);
         $this->assertArrayHasKey('message', $result);
         $this->assertNotNull($result['data']);
         $this->assertArrayHasKey('variants', $result['data']);
@@ -202,8 +202,8 @@ class EkatraSDKTest extends TestCase
         $this->assertIsArray($result);
         $this->assertArrayHasKey('status', $result);
         $this->assertArrayHasKey('data', $result);
-        $this->assertArrayHasKey('additionalInfo', $result);
-        $this->assertArrayHasKey('canAutoTransform', $result['additionalInfo']);
+        $this->assertArrayHasKey('metadata', $result);
+        $this->assertArrayHasKey('canAutoTransform', $result['metadata']);
         
         if ($result['status'] === 'success') {
             $this->assertArrayHasKey('productId', $result['data']);
@@ -225,8 +225,8 @@ class EkatraSDKTest extends TestCase
         $this->assertIsArray($result);
         $this->assertArrayHasKey('status', $result);
         $this->assertArrayHasKey('data', $result);
-        $this->assertArrayHasKey('additionalInfo', $result);
-        $this->assertArrayHasKey('canAutoTransform', $result['additionalInfo']);
+        $this->assertArrayHasKey('metadata', $result);
+        $this->assertArrayHasKey('canAutoTransform', $result['metadata']);
     }
 
     public function testCanAutoTransformFlexible()

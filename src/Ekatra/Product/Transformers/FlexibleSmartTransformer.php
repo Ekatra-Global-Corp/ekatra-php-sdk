@@ -4,6 +4,7 @@ namespace Ekatra\Product\Transformers;
 
 use Ekatra\Product\Core\EkatraProduct;
 use Ekatra\Product\Core\EkatraVariant;
+use Ekatra\Product\ResponseBuilder;
 
 /**
  * FlexibleSmartTransformer
@@ -63,35 +64,23 @@ class FlexibleSmartTransformer
         $validation = $this->validateData($mappedData);
         
         if (!$validation['valid']) {
-            return [
-                'status' => 'error',
-                'data' => null,
-                'additionalInfo' => [
-                    'validation' => $validation,
-                    'dataType' => $this->detectDataType($extractedData),
-                    'canAutoTransform' => false,
-                    'manualSetupRequired' => true,
-                    'maxQuantity' => null
-                ],
-                'message' => 'Product transformation failed'
-            ];
+            return ResponseBuilder::validationError($validation, 'Product transformation failed');
         }
         
         // Transform to Ekatra format
         $ekatraData = $this->buildEkatraStructure($mappedData);
         
-        return [
-            'status' => 'success',
-            'data' => $ekatraData,
-            'additionalInfo' => [
+        return ResponseBuilder::success(
+            $ekatraData,
+            [
                 'validation' => $validation,
                 'dataType' => $this->detectDataType($extractedData),
                 'canAutoTransform' => true,
                 'manualSetupRequired' => false,
                 'maxQuantity' => $this->extractMaxQuantity($mappedData)
             ],
-            'message' => 'Product details retrieved successfully'
-        ];
+            'Product details retrieved successfully'
+        );
     }
 
     /**

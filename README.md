@@ -94,12 +94,12 @@ $result = EkatraSDK::smartTransformProductFlexible($customerData);
 if ($result['status'] === 'success') {
     // Get your perfectly formatted Ekatra product
     $ekatraProduct = $result['data'];
-    $maxQuantity = $result['additionalInfo']['maxQuantity'];
+    $maxQuantity = $result['metadata']['maxQuantity'];
     echo "✅ Auto-transformed successfully!";
     echo $maxQuantity ? "Max quantity: $maxQuantity" : "No quantity limit";
 } else {
     // Get clear error guidance
-    foreach ($result['additionalInfo']['validation']['errors'] as $error) {
+    foreach ($result['metadata']['validation']['errors'] as $error) {
         echo "❌ $error";
     }
 }
@@ -181,7 +181,7 @@ $customerData = [
 
 $result = EkatraSDK::transformProduct($customerData);
 
-if ($result['success']) {
+if ($result['status'] === 'success') {
     echo "Transformation successful!";
     $ekatraFormat = $result['data'];
 } else {
@@ -274,8 +274,8 @@ class ProductController extends Controller
         return response()->json([
             'status' => 'error',
             'message' => 'Product transformation failed',
-            'validation' => $result['additionalInfo']['validation'] ?? null,
-            'suggestions' => $result['additionalInfo']['suggestions'] ?? []
+            'validation' => $result['metadata']['validation'] ?? null,
+            'suggestions' => $result['metadata']['suggestions'] ?? []
         ], 400);
     }
 }
@@ -292,10 +292,7 @@ class ProductController extends Controller
         $myProduct = Product::findOrFail($id);
         $ekatraProduct = EkatraSDK::productFromData($myProduct->toArray());
         
-        return response()->json([
-            'success' => true,
-            'data' => $ekatraProduct->toEkatraFormat()
-        ]);
+        return response()->json($ekatraProduct->toEkatraFormatWithValidation());
     }
 }
 ```
@@ -322,12 +319,12 @@ use Ekatra\Product\EkatraSDK;
 // Works with ANY API format!
 $result = EkatraSDK::smartTransformProductFlexible($customerData);
 
-if ($result['success']) {
+if ($result['status'] === 'success') {
     echo "✅ Transformation successful!";
     echo json_encode($result['data'], JSON_PRETTY_PRINT);
 } else {
     echo "❌ Transformation failed:";
-    foreach ($result['validation']['errors'] as $error) {
+    foreach ($result['metadata']['validation']['errors'] as $error) {
         echo "- " . $error;
     }
 }
@@ -385,7 +382,7 @@ $result = EkatraSDK::smartTransformProductFlexible($minimalData);
 **⚡ Old way (DEPRECATED):**
 ```php
 $result = EkatraSDK::smartTransformProduct($customerData);
-if ($result['success']) { // Old boolean format
+if ($result['status'] === 'success') { // Old boolean format
     $data = $result['data'];
 }
 ```
@@ -395,8 +392,8 @@ if ($result['success']) { // Old boolean format
 $result = EkatraSDK::smartTransformProductFlexible($customerData);
 if ($result['status'] === 'success') { // New string format
     $data = $result['data'];
-    $validation = $result['additionalInfo']['validation'];
-    $maxQuantity = $result['additionalInfo']['maxQuantity'];
+    $validation = $result['metadata']['validation'];
+    $maxQuantity = $result['metadata']['maxQuantity'];
 }
 ```
 
@@ -405,11 +402,8 @@ if ($result['status'] === 'success') { // New string format
 **From Legacy Laravel Usage:**
 ```php
 // ❌ OLD: Manual product creation
-$ekatraProduct = EkatraSDK::productFromData($myProduct->toArray());
-return response()->json([
-    'success' => true,
-    'data' => $ekatraProduct->toEkatraFormat()
-]);
+$result = EkatraSDK::smartTransformProductFlexible($myProduct->toArray());
+return response()->json($result);
 ```
 
 **To New Flexible Approach:**
@@ -430,8 +424,8 @@ if ($result['status'] === 'success') {
 **Key Changes:**
 - ✅ Use `smartTransformProductFlexible()` instead of manual product creation
 - ✅ Check `$result['status'] === 'success'` instead of `$result['success']`
-- ✅ Access validation via `$result['additionalInfo']['validation']`
-- ✅ Override `maxQuantity` in `$result['additionalInfo']['maxQuantity']`
+- ✅ Access validation via `$result['metadata']['validation']`
+- ✅ Override `maxQuantity` in `$result['metadata']['maxQuantity']`
 
 ## 🛠️ Laravel Implementation Guide (Option B)
 
@@ -529,7 +523,7 @@ function transformProductForApi($customerData, $maxQuantity = null, $customMessa
     
     // Extract core data
     $data = $result['data'];
-    $validation = $result['additionalInfo']['validation'];
+    $validation = $result['metadata']['validation'];
     $dataType = $result['additionalInfo']['dataType'];
     
     // Build custom response
@@ -799,7 +793,7 @@ The SDK provides flexible error handling:
 ```php
 $result = EkatraSDK::transformProduct($data);
 
-if (!$result['success']) {
+if ($result['status'] !== 'success') {
     if (isset($result['validation']['errors'])) {
         foreach ($result['validation']['errors'] as $error) {
             echo "Validation Error: $error\n";
@@ -867,7 +861,7 @@ $customerData = [
 
 $result = EkatraSDK::transformProduct($customerData);
 
-if ($result['success']) {
+if ($result['status'] === 'success') {
     $ekatraFormat = $result['data'];
     // Use the transformed data
 } else {
@@ -885,16 +879,14 @@ class ProductController extends Controller
     {
         try {
             $product = Product::findOrFail($id);
-            $ekatraProduct = EkatraSDK::productFromData($product->toArray());
-            
-            return response()->json([
-                'success' => true,
-                'data' => $ekatraProduct->toEkatraFormat()
-            ]);
+            $result = EkatraSDK::smartTransformProductFlexible($product->toArray());
+            return response()->json($result);
         } catch (\Exception $e) {
             return response()->json([
-                'success' => false,
-                'error' => 'Product transformation failed'
+                'status' => 'error',
+                'data' => null,
+                'metadata' => ['validation' => ['valid' => false, 'errors' => [$e->getMessage()]]],
+                'message' => 'Product transformation failed'
             ], 500);
         }
     }
@@ -965,7 +957,7 @@ For support and questions:
 
 #### 🛠️ Response Structure Changes
 - **Old Structure**: `{success: true, data: {...}, validation: {...}}`
-- **New Structure**: `{status: "success", data: {...}, additionalInfo: {validation: {...}, maxQuantity: number}}`
+- **New Structure**: `{status: "success", data: {...}, metadata: {validation: {...}, maxQuantity: number, sdkVersion: "2.0.5"}}`
 
 #### 🔧 New Methods
 - `extractMaxQuantity()` - Extracts quantity limits from input data

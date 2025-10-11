@@ -5,6 +5,7 @@ namespace Ekatra\Product\Core;
 use Ekatra\Product\Exceptions\EkatraValidationException;
 use Ekatra\Product\Validators\ProductValidator;
 use Ekatra\Product\Transformers\ProductTransformer;
+use Ekatra\Product\ResponseBuilder;
 
 /**
  * EkatraProduct - Core product class
@@ -421,24 +422,14 @@ class EkatraProduct
         $validation = $this->validate();
         
         if (!$validation['valid']) {
-            return [
-                'status' => 'error',
-                'data' => null,
-                'additionalInfo' => [
-                    'validation' => $validation
-                ],
-                'message' => 'Product validation failed'
-            ];
+            return ResponseBuilder::validationError($validation, 'Product validation failed');
         }
         
-        return [
-            'status' => 'success',
-            'data' => $this->transformer->toEkatraFormat($this),
-            'additionalInfo' => [
-                'validation' => $validation
-            ],
-            'message' => 'Product details retrieved successfully'
-        ];
+        return ResponseBuilder::success(
+            $this->transformer->toEkatraFormat($this),
+            ['validation' => $validation],
+            'Product details retrieved successfully'
+        );
     }
 
     /**

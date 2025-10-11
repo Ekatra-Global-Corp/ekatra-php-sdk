@@ -5,6 +5,7 @@ namespace Ekatra\Product\Core;
 use Ekatra\Product\Exceptions\EkatraValidationException;
 use Ekatra\Product\Validators\VariantValidator;
 use Ekatra\Product\Transformers\VariantTransformer;
+use Ekatra\Product\ResponseBuilder;
 
 /**
  * EkatraVariant - Core variant class for product variants
@@ -322,24 +323,14 @@ class EkatraVariant
         $validation = $this->validate();
         
         if (!$validation['valid']) {
-            return [
-                'status' => 'error',
-                'data' => null,
-                'additionalInfo' => [
-                    'validation' => $validation
-                ],
-                'message' => 'Variant validation failed'
-            ];
+            return ResponseBuilder::validationError($validation, 'Variant validation failed');
         }
         
-        return [
-            'status' => 'success',
-            'data' => $this->transformer->toEkatraFormat($this),
-            'additionalInfo' => [
-                'validation' => $validation
-            ],
-            'message' => 'Variant details retrieved successfully'
-        ];
+        return ResponseBuilder::success(
+            $this->transformer->toEkatraFormat($this),
+            ['validation' => $validation],
+            'Variant details retrieved successfully'
+        );
     }
 
 
