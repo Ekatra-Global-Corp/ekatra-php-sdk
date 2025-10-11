@@ -27,6 +27,7 @@ jobs:
 
     - name: Install dependencies
       run: |
+        rm -f composer.lock
         composer install --prefer-dist --no-progress --no-interaction
 
     - name: Run Unit Tests
@@ -321,7 +322,9 @@ jobs:
         extensions: mbstring, xml, curl, json
 
     - name: Install dependencies
-      run: composer install --prefer-dist --no-progress --no-interaction
+      run: |
+        rm -f composer.lock
+        composer install --prefer-dist --no-progress --no-interaction
 
     - name: Run Security Audit
       run: |
@@ -426,7 +429,9 @@ jobs:
         extensions: mbstring, xml, curl, json
 
     - name: Install dependencies
-      run: composer install --prefer-dist --no-progress --no-interaction
+      run: |
+        rm -f composer.lock
+        composer install --prefer-dist --no-progress --no-interaction
 
     - name: Test Real-world Data
       run: |
