@@ -475,10 +475,10 @@ jobs:
             'Has title' => \$result['data']['title'] === 'Multicolor Gemstone Orb Earrings',
             'Has currency' => \$result['data']['currency'] === 'INR',
             'Has variants' => count(\$result['data']['variants']) > 0,
-            'Has media' => isset(\$result['data']['variants'][0]['media']),
-            'Media has correct structure' => isset(\$result['data']['variants'][0]['media'][0]['type']) && 
-                                          isset(\$result['data']['variants'][0]['media'][0]['url']) &&
-                                          isset(\$result['data']['variants'][0]['media'][0]['thumbnailUrl']),
+            'Has mediaList' => isset(\$result['data']['variants'][0]['mediaList']),
+            'MediaList has correct structure' => isset(\$result['data']['variants'][0]['mediaList'][0]['mediaType']) && 
+                                          isset(\$result['data']['variants'][0]['mediaList'][0]['playUrl']) &&
+                                          isset(\$result['data']['variants'][0]['mediaList'][0]['thumbnailUrl']),
             'SDK version correct' => \$result['metadata']['sdkVersion'] === \$expectedVersion
         ];
         

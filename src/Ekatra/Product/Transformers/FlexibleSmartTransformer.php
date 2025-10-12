@@ -31,7 +31,8 @@ class FlexibleSmartTransformer
         'images' => ['image_urls', 'ImageURLs', 'imageUrls', 'images', 'Images', 'media_gallery_entries', 'media'],
         'variants' => ['variants'],
         'max_quantity' => ['max_quantity', 'maxQuantity', 'max_purchase_quantity', 'quantity_limit'],
-        'discount' => ['discount', 'discount_percent', 'discountPercentage', 'discountAmount', 'discount_text']
+        'discount' => ['discount', 'discount_percent', 'discountPercentage', 'discountAmount', 'discount_text'],
+        'countryCode' => ['countryCode', 'country_code', 'country', 'origin_country']
     ];
 
     /**
@@ -351,7 +352,10 @@ class FlexibleSmartTransformer
             'existingProductUrl' => $url,
             'keywords' => $keywords,
             'variants' => [],
-            'sizes' => []
+            'sizes' => [],
+            'offers' => $this->buildOffers($data),
+            'handle' => $this->generateHandle($title),
+            'countryCode' => $this->extractCountryCode($data)
         ];
         
         // Handle multiple variants (COMPLEX_STRUCTURE format) - PRIORITY
@@ -414,7 +418,7 @@ class FlexibleSmartTransformer
         }
         
         return [
-            '_id' => $variantId,
+            'id' => $variantId,
             'color' => 'unknown',
             'variations' => [
                 [
@@ -430,7 +434,7 @@ class FlexibleSmartTransformer
             ],
             'weight' => 0,
             'thumbnail' => $this->extractThumbnail($data),
-            'media' => $this->buildMediaList($data)
+            'mediaList' => $this->buildMediaList($data)
         ];
     }
 
@@ -465,7 +469,7 @@ class FlexibleSmartTransformer
         $sizeId = $this->generateId();
         
         return [
-            '_id' => $variantId,
+            'id' => $variantId,
             'color' => $color,
             'variations' => [
                 [
@@ -481,7 +485,7 @@ class FlexibleSmartTransformer
             ],
             'weight' => $data['weight'] ?? 0,
             'thumbnail' => $this->extractThumbnail($data),
-            'media' => $this->buildMediaList($data)
+            'mediaList' => $this->buildMediaList($data)
         ];
     }
 
@@ -515,8 +519,8 @@ class FlexibleSmartTransformer
             $imageUrl = trim($imageUrl);
             if ($imageUrl) {
                 $mediaList[] = [
-                    'type' => 'IMAGE',
-                    'url' => $imageUrl,
+                    'mediaType' => 'IMAGE',
+                    'playUrl' => $imageUrl,
                     'thumbnailUrl' => $imageUrl,
                     'mimeType' => 'image/jpeg',
                     'playerTypeEnum' => 'IMAGE',
@@ -546,7 +550,7 @@ class FlexibleSmartTransformer
                 if (!isset($sizeMap[$sizeId])) {
                     $sizeMap[$sizeId] = $sizeName;
                     $sizes[] = [
-                        '_id' => $sizeId,
+                        'id' => $sizeId,
                         'name' => $sizeName
                     ];
                 }
@@ -585,5 +589,62 @@ class FlexibleSmartTransformer
             mt_rand(0, 0x3fff) | 0x8000,
             mt_rand(0, 0xffff), mt_rand(0, 0xffff), mt_rand(0, 0xffff)
         );
+    }
+
+    /**
+     * Build offers array
+     */
+    private function buildOffers($data): array
+    {
+        // Check if offers are provided in the data
+        $offers = $this->findValueByFields($data, ['offers', 'offer_list', 'promotions', 'discounts']);
+        
+        if ($offers && is_array($offers)) {
+            return $offers;
+        }
+        
+        // Default offers if none provided
+        return [
+            [
+                'title' => 'Offer 1',
+                'productOfferDetails' => [
+                    [
+                        'title' => 'Free Shipping For All Country',
+                        'description' => 'Free shipping on all products • Minimum purchase of ₹1,200.00 • For all countries'
+                    ]
+                ]
+            ],
+            [
+                'title' => 'Offer 2',
+                'productOfferDetails' => [
+                    [
+                        'title' => 'Amount Off Order',
+                        'description' => '39% off entire order • Minimum quantity of 3'
+                    ]
+                ]
+            ]
+        ];
+    }
+
+    /**
+     * Generate handle from title
+     */
+    private function generateHandle(string $title): string
+    {
+        // Convert to lowercase, replace spaces and special chars with hyphens
+        $handle = strtolower($title);
+        $handle = preg_replace('/[^a-z0-9\s-]/', '', $handle);
+        $handle = preg_replace('/[\s-]+/', '-', $handle);
+        $handle = trim($handle, '-');
+        
+        return $handle;
+    }
+
+    /**
+     * Extract country code
+     */
+    private function extractCountryCode($data): ?string
+    {
+        return $this->findValueByFields($data, $this->fieldMappings['countryCode']);
     }
 }

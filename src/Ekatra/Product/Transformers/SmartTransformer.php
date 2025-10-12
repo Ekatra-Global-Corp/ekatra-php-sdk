@@ -114,7 +114,7 @@ class SmartTransformer
             $images = $this->extractImages($variant);
             
             $transformedVariants[] = [
-                'id' => $variantId,
+                '_id' => $variantId,
                 'name' => $variant['variant_name'] ?? $variant['name'] ?? "Variant $index",
                 'color' => $variant['variant_color'] ?? $variant['color'] ?? 'unknown',
                 'variations' => [

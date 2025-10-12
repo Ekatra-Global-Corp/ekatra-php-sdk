@@ -75,6 +75,23 @@ foreach ($tests as $testName => $testFunction) {
             'SDK version matches composer.json' => $result['metadata']['sdkVersion'] === getExpectedVersion()
         ];
         
+        // Additional checks for FlexibleSmartTransformer
+        if ($testName === 'FlexibleSmartTransformer::transformToEkatra') {
+            $additionalChecks = [
+                'Has data' => isset($result['data']),
+                'Has offers field' => isset($result['data']['offers']),
+                'Has handle field' => isset($result['data']['handle']),
+                'Has countryCode field' => array_key_exists('countryCode', $result['data']),
+                'Has variants' => isset($result['data']['variants']),
+                'Has mediaList in variant' => isset($result['data']['variants'][0]['mediaList']),
+                'MediaList has mediaType' => isset($result['data']['variants'][0]['mediaList'][0]['mediaType']),
+                'MediaList has playUrl' => isset($result['data']['variants'][0]['mediaList'][0]['playUrl']),
+                'MediaList has thumbnailUrl' => isset($result['data']['variants'][0]['mediaList'][0]['thumbnailUrl']),
+                'Variant has id' => isset($result['data']['variants'][0]['id'])
+            ];
+            $checks = array_merge($checks, $additionalChecks);
+        }
+        
         $passed = !in_array(false, $checks);
         $results[$testName] = $passed;
         
