@@ -603,27 +603,8 @@ class FlexibleSmartTransformer
             return $offers;
         }
         
-        // Default offers if none provided
-        return [
-            [
-                'title' => 'Offer 1',
-                'productOfferDetails' => [
-                    [
-                        'title' => 'Free Shipping For All Country',
-                        'description' => 'Free shipping on all products • Minimum purchase of ₹1,200.00 • For all countries'
-                    ]
-                ]
-            ],
-            [
-                'title' => 'Offer 2',
-                'productOfferDetails' => [
-                    [
-                        'title' => 'Amount Off Order',
-                        'description' => '39% off entire order • Minimum quantity of 3'
-                    ]
-                ]
-            ]
-        ];
+        // Return empty array if no offers provided
+        return [];
     }
 
     /**
