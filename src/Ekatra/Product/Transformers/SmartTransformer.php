@@ -53,14 +53,36 @@ class SmartTransformer
         // Extract images
         $images = $this->extractImages($data);
         
-        // Calculate discount
+        // Calculate discount and handle discountLabel
         $mrp = (float) ($data['variant_mrp'] ?? 0);
         $sellingPrice = (float) ($data['variant_selling_price'] ?? 0);
-        $discount = null;
+        $discountValue = $data['discount'] ?? null;
+        $discountLabelValue = $data['discountLabel'] ?? $data['discount_label'] ?? null;
         
+        // Always calculate percentage for display purposes
+        $calculatedDiscount = 0.0;
         if ($mrp > 0 && $sellingPrice < $mrp) {
-            // Use HALF_UP rounding (same as Java BigDecimal)
-            $discount = round((($mrp - $sellingPrice) / $mrp) * 100, 2, PHP_ROUND_HALF_UP);
+            $calculatedDiscount = round((($mrp - $sellingPrice) / $mrp) * 100, 2, PHP_ROUND_HALF_UP);
+        }
+        
+        // Determine discount and discountLabel based on input
+        $discount = null;
+        $discountLabel = null;
+        
+        if ($discountValue !== null) {
+            if (is_numeric($discountValue)) {
+                // Numeric discount provided - use as percentage
+                $discount = (float) $discountValue;
+                $discountLabel = $discountLabelValue ? (string) $discountLabelValue : null;
+            } else {
+                // String discount provided - use as label, keep calculated percentage
+                $discount = $calculatedDiscount;
+                $discountLabel = (string) $discountValue;
+            }
+        } else {
+            // No discount provided - use calculated percentage
+            $discount = $calculatedDiscount;
+            $discountLabel = $discountLabelValue ? (string) $discountLabelValue : null;
         }
         
         return [
@@ -79,11 +101,13 @@ class SmartTransformer
                             'sizeId' => $sizeId,
                             'mrp' => (float) ($data['variant_mrp'] ?? 0),
                             'sellingPrice' => (float) ($data['variant_selling_price'] ?? 0),
+                            'discount' => $discount,
+                            'discountLabel' => $discountLabel,
                             'availability' => ($data['variant_quantity'] ?? 0) > 0,
                             'quantity' => (int) ($data['variant_quantity'] ?? 0),
                             'size' => $data['variant_size'] ?? 'freestyle',
                             'variantId' => $variantId
-                        ] + ($discount !== null ? ['discount' => $discount] : [])
+                        ]
                     ],
                     'mediaList' => $this->createMediaList($images),
                     'weight' => 0,
@@ -113,6 +137,38 @@ class SmartTransformer
             
             $images = $this->extractImages($variant);
             
+            // Calculate discount and handle discountLabel for each variant
+            $mrp = (float) ($variant['variant_mrp'] ?? $variant['mrp'] ?? 0);
+            $sellingPrice = (float) ($variant['variant_selling_price'] ?? $variant['sellingPrice'] ?? 0);
+            $discountValue = $variant['discount'] ?? null;
+            $discountLabelValue = $variant['discountLabel'] ?? $variant['discount_label'] ?? null;
+            
+            // Always calculate percentage for display purposes
+            $calculatedDiscount = 0.0;
+            if ($mrp > 0 && $sellingPrice < $mrp) {
+                $calculatedDiscount = round((($mrp - $sellingPrice) / $mrp) * 100, 2, PHP_ROUND_HALF_UP);
+            }
+            
+            // Determine discount and discountLabel based on input
+            $discount = null;
+            $discountLabel = null;
+            
+            if ($discountValue !== null) {
+                if (is_numeric($discountValue)) {
+                    // Numeric discount provided - use as percentage
+                    $discount = (float) $discountValue;
+                    $discountLabel = $discountLabelValue ? (string) $discountLabelValue : null;
+                } else {
+                    // String discount provided - use as label, keep calculated percentage
+                    $discount = $calculatedDiscount;
+                    $discountLabel = (string) $discountValue;
+                }
+            } else {
+                // No discount provided - use calculated percentage
+                $discount = $calculatedDiscount;
+                $discountLabel = $discountLabelValue ? (string) $discountLabelValue : null;
+            }
+            
             $transformedVariants[] = [
                 '_id' => $variantId,
                 'name' => $variant['variant_name'] ?? $variant['name'] ?? "Variant $index",
@@ -120,8 +176,10 @@ class SmartTransformer
                 'variations' => [
                     [
                         'sizeId' => $sizeId,
-                        'mrp' => (float) ($variant['variant_mrp'] ?? $variant['mrp'] ?? 0),
-                        'sellingPrice' => (float) ($variant['variant_selling_price'] ?? $variant['sellingPrice'] ?? 0),
+                        'mrp' => $mrp,
+                        'sellingPrice' => $sellingPrice,
+                        'discount' => $discount,
+                        'discountLabel' => $discountLabel,
                         'availability' => ($variant['variant_quantity'] ?? $variant['quantity'] ?? 0) > 0,
                         'quantity' => (int) ($variant['variant_quantity'] ?? $variant['quantity'] ?? 0),
                         'size' => $variant['variant_size'] ?? $variant['size'] ?? 'freestyle',

@@ -32,6 +32,7 @@ class FlexibleSmartTransformer
         'variants' => ['variants'],
         'max_quantity' => ['max_quantity', 'maxQuantity', 'max_purchase_quantity', 'quantity_limit'],
         'discount' => ['discount', 'discount_percent', 'discountPercentage', 'discountAmount', 'discount_text'],
+        'discountLabel' => ['discountLabel', 'discount_label', 'discountText', 'discount_description', 'offer_text'],
         'countryCode' => ['countryCode', 'country_code', 'country', 'origin_country']
     ];
 
@@ -395,6 +396,7 @@ class FlexibleSmartTransformer
         
         // Try to extract discount from various fields
         $discountValue = $this->findValueByFields($data, ['discount', 'discount_percent', 'discountPercentage', 'discountAmount']);
+        $discountLabelValue = $this->findValueByFields($data, ['discountLabel', 'discount_label', 'discountText', 'discount_description', 'offer_text']);
         
         // Try to extract quantity from various fields
         $quantity = $this->findValueByFields($data, ['variant_quantity', 'quantity', 'stock_quantity', 'inventory_quantity']) ?? 0;
@@ -403,18 +405,29 @@ class FlexibleSmartTransformer
         $price = $price ?: 0;
         $mrp = $mrp ?: $price;
         
-        // Simple logic: If they provide discount field, use it. Otherwise auto-calculate. Always store as string.
-        if ($discountValue !== null) {
-            // They provided discount field - store as-is (always as string)
-            $discount = (string) $discountValue;
+        // Always calculate percentage for display purposes
+        if ($mrp > 0 && $price < $mrp) {
+            $calculatedDiscount = (($mrp - $price) / $mrp) * 100;
+            $calculatedPercentage = round($calculatedDiscount, 2, PHP_ROUND_HALF_UP);
         } else {
-            // No discount field provided - auto-calculate from MRP vs selling price
-            if ($mrp > 0 && $price < $mrp) {
-                $calculatedDiscount = (($mrp - $price) / $mrp) * 100;
-                $discount = (string) round($calculatedDiscount, 2, PHP_ROUND_HALF_UP);
+            $calculatedPercentage = 0.0;
+        }
+        
+        // Determine discount and discountLabel based on input
+        if ($discountValue !== null) {
+            if (is_numeric($discountValue)) {
+                // Numeric discount provided - use as percentage
+                $discount = (float) $discountValue;
+                $discountLabel = $discountLabelValue ? (string) $discountLabelValue : null;
             } else {
-                $discount = '0';
+                // String discount provided - use as label, keep calculated percentage
+                $discount = $calculatedPercentage;
+                $discountLabel = (string) $discountValue;
             }
+        } else {
+            // No discount provided - use calculated percentage
+            $discount = $calculatedPercentage;
+            $discountLabel = $discountLabelValue ? (string) $discountLabelValue : null;
         }
         
         return [
@@ -426,6 +439,7 @@ class FlexibleSmartTransformer
                     'mrp' => (string) $mrp,
                     'sellingPrice' => (string) $price,
                     'discount' => $discount,
+                    'discountLabel' => $discountLabel,
                     'availability' => $quantity > 0,
                     'quantity' => (int) $quantity,
                     'size' => 'freestyle',
@@ -450,20 +464,33 @@ class FlexibleSmartTransformer
         $quantity = $this->findValueByFields($data, ['variant_quantity', 'quantity', 'stock_quantity', 'inventory_quantity']) ?? 0;
         $size = $data['size'] ?? $this->findValueByFields($data, ['size']) ?? 'freestyle';
         
-        // Simple logic: If they provide discount field, use it. Otherwise auto-calculate. Always store as string.
+        // Enhanced discount logic: Handle both numeric and string discounts
         $discountValue = $this->findValueByFields($data, ['discount', 'discount_percent', 'discountPercentage', 'discountAmount']);
+        $discountLabelValue = $this->findValueByFields($data, ['discountLabel', 'discount_label', 'discountText', 'discount_description', 'offer_text']);
         
-        if ($discountValue !== null) {
-            // They provided discount field - store as-is (always as string)
-            $discount = (string) $discountValue;
+        // Always calculate percentage for display purposes
+        if ($mrp > 0 && $sellingPrice < $mrp) {
+            $calculatedDiscount = (($mrp - $sellingPrice) / $mrp) * 100;
+            $calculatedPercentage = round($calculatedDiscount, 2, PHP_ROUND_HALF_UP);
         } else {
-            // No discount field provided - auto-calculate from MRP vs selling price
-            if ($mrp > 0 && $sellingPrice < $mrp) {
-                $calculatedDiscount = (($mrp - $sellingPrice) / $mrp) * 100;
-                $discount = (string) round($calculatedDiscount, 2, PHP_ROUND_HALF_UP);
+            $calculatedPercentage = 0.0;
+        }
+        
+        // Determine discount and discountLabel based on input
+        if ($discountValue !== null) {
+            if (is_numeric($discountValue)) {
+                // Numeric discount provided - use as percentage
+                $discount = (float) $discountValue;
+                $discountLabel = $discountLabelValue ? (string) $discountLabelValue : null;
             } else {
-                $discount = '0';
+                // String discount provided - use as label, keep calculated percentage
+                $discount = $calculatedPercentage;
+                $discountLabel = (string) $discountValue;
             }
+        } else {
+            // No discount provided - use calculated percentage
+            $discount = $calculatedPercentage;
+            $discountLabel = $discountLabelValue ? (string) $discountLabelValue : null;
         }
         
         $sizeId = $this->generateId();
@@ -477,6 +504,7 @@ class FlexibleSmartTransformer
                     'mrp' => (string) $mrp,
                     'sellingPrice' => (string) $sellingPrice,
                     'discount' => $discount,
+                    'discountLabel' => $discountLabel,
                     'availability' => $quantity > 0,
                     'quantity' => (int) $quantity,
                     'size' => $size,

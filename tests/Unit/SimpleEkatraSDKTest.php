@@ -102,4 +102,34 @@ class SimpleEkatraSDKTest extends TestCase
         $this->assertTrue(method_exists(EkatraSDK::class, 'canAutoTransform'));
         $this->assertTrue(method_exists(EkatraSDK::class, 'getSupportedFormats'));
     }
+
+    public function testDiscountLabelField()
+    {
+        $customerData = [
+            'product_id' => '123',
+            'title' => 'Test Product',
+            'description' => 'Test Description',
+            'currency' => 'USD',
+            'existing_url' => 'https://example.com/product',
+            'keywords' => ['test', 'product'],
+            'variant_name' => 'Test Variant',
+            'variant_mrp' => '100.00',
+            'variant_selling_price' => '80.00',
+            'discount' => '20% OFF on DIA'
+        ];
+        
+        $result = EkatraSDK::smartTransformProductFlexible($customerData);
+        
+        $this->assertIsArray($result);
+        $this->assertEquals('success', $result['status']);
+        $this->assertArrayHasKey('variants', $result['data']);
+        
+        $variant = $result['data']['variants'][0];
+        $variation = $variant['variations'][0];
+        
+        $this->assertArrayHasKey('discount', $variation);
+        $this->assertArrayHasKey('discountLabel', $variation);
+        $this->assertEquals(20.0, $variation['discount']); // Auto-calculated
+        $this->assertEquals('20% OFF on DIA', $variation['discountLabel']);
+    }
 }

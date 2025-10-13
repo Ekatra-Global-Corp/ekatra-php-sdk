@@ -38,7 +38,8 @@ $testData = [
     'variant_quantity' => 5,
     'variant_mrp' => 1000,
     'variant_selling_price' => 800,
-    'image_urls' => 'https://example.com/image.jpg'
+    'image_urls' => 'https://example.com/image.jpg',
+    'discount' => '20% OFF on DIA'  // Test discountLabel functionality
 ];
 
 $tests = [
@@ -87,9 +88,23 @@ foreach ($tests as $testName => $testFunction) {
                 'MediaList has mediaType' => isset($result['data']['variants'][0]['mediaList'][0]['mediaType']),
                 'MediaList has playUrl' => isset($result['data']['variants'][0]['mediaList'][0]['playUrl']),
                 'MediaList has thumbnailUrl' => isset($result['data']['variants'][0]['mediaList'][0]['thumbnailUrl']),
-                'Variant has id' => isset($result['data']['variants'][0]['id'])
+                'Variant has id' => isset($result['data']['variants'][0]['id']),
+                'Has variations' => isset($result['data']['variants'][0]['variations']),
+                'Variation has discount field' => isset($result['data']['variants'][0]['variations'][0]['discount']),
+                'Variation has discountLabel field' => array_key_exists('discountLabel', $result['data']['variants'][0]['variations'][0])
             ];
             $checks = array_merge($checks, $additionalChecks);
+        }
+        
+        // Additional discountLabel functionality test for FlexibleSmartTransformer
+        if ($testName === 'FlexibleSmartTransformer::transformToEkatra') {
+            $discountChecks = [
+                'Discount is calculated correctly' => $result['data']['variants'][0]['variations'][0]['discount'] === 20.0,
+                'DiscountLabel is set correctly' => $result['data']['variants'][0]['variations'][0]['discountLabel'] === '20% OFF on DIA',
+                'Discount is float type' => is_float($result['data']['variants'][0]['variations'][0]['discount']),
+                'DiscountLabel is string type' => is_string($result['data']['variants'][0]['variations'][0]['discountLabel'])
+            ];
+            $checks = array_merge($checks, $discountChecks);
         }
         
         $passed = !in_array(false, $checks);

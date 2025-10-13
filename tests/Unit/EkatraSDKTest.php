@@ -63,7 +63,70 @@ class EkatraSDKTest extends TestCase
         
         $variation = $variant['variations'][0];
         $this->assertArrayHasKey('discount', $variation);
+        $this->assertArrayHasKey('discountLabel', $variation);
         $this->assertEquals(20.0, $variation['discount']);
+        $this->assertNull($variation['discountLabel']);
+    }
+
+    public function testDiscountLabelScenarios()
+    {
+        // Test 1: Numeric discount provided
+        $customerData1 = [
+            'product_id' => '123',
+            'title' => 'Test Product',
+            'description' => 'Test description',
+            'currency' => 'USD',
+            'existing_url' => 'https://example.com',
+            'keywords' => 'test,product',
+            'variant_name' => 'test',
+            'variant_mrp' => '100.00',
+            'variant_selling_price' => '80.00',
+            'discount' => 15.5
+        ];
+        
+        $result1 = EkatraSDK::smartTransformProductFlexible($customerData1);
+        $variation1 = $result1['data']['variants'][0]['variations'][0];
+        $this->assertEquals(15.5, $variation1['discount']);
+        $this->assertNull($variation1['discountLabel']);
+        
+        // Test 2: String discount provided
+        $customerData2 = [
+            'product_id' => '123',
+            'title' => 'Test Product',
+            'description' => 'Test description',
+            'currency' => 'USD',
+            'existing_url' => 'https://example.com',
+            'keywords' => 'test,product',
+            'variant_name' => 'test',
+            'variant_mrp' => '100.00',
+            'variant_selling_price' => '80.00',
+            'discount' => '20% OFF on DIA'
+        ];
+        
+        $result2 = EkatraSDK::smartTransformProductFlexible($customerData2);
+        $variation2 = $result2['data']['variants'][0]['variations'][0];
+        $this->assertEquals(20.0, $variation2['discount']); // Auto-calculated
+        $this->assertEquals('20% OFF on DIA', $variation2['discountLabel']);
+        
+        // Test 3: Both numeric discount and discountLabel provided
+        $customerData3 = [
+            'product_id' => '123',
+            'title' => 'Test Product',
+            'description' => 'Test description',
+            'currency' => 'USD',
+            'existing_url' => 'https://example.com',
+            'keywords' => 'test,product',
+            'variant_name' => 'test',
+            'variant_mrp' => '100.00',
+            'variant_selling_price' => '80.00',
+            'discount' => 25.0,
+            'discountLabel' => 'Special Offer'
+        ];
+        
+        $result3 = EkatraSDK::smartTransformProductFlexible($customerData3);
+        $variation3 = $result3['data']['variants'][0]['variations'][0];
+        $this->assertEquals(25.0, $variation3['discount']);
+        $this->assertEquals('Special Offer', $variation3['discountLabel']);
     }
 
     public function testGetManualSetupGuide()
@@ -298,8 +361,8 @@ class EkatraSDKTest extends TestCase
         $this->assertArrayHasKey('discount', $variation);
         
         // Should auto-calculate: (100000-80000)/100000 * 100 = 20%
-        $this->assertEquals('20', $variation['discount']);
-        $this->assertIsString($variation['discount']);
+        $this->assertEquals(20.0, $variation['discount']);
+        $this->assertIsFloat($variation['discount']);
     }
 
     /**
@@ -334,10 +397,14 @@ class EkatraSDKTest extends TestCase
         
         $variation = $variant['variations'][0];
         $this->assertArrayHasKey('discount', $variation);
+        $this->assertArrayHasKey('discountLabel', $variation);
         
-        // Should preserve the exact string provided
-        $this->assertEquals('15% Off on Dia', $variation['discount']);
-        $this->assertIsString($variation['discount']);
+        // Should auto-calculate percentage: (100000-80000)/100000 * 100 = 20%
+        $this->assertEquals(20.0, $variation['discount']);
+        $this->assertIsFloat($variation['discount']);
+        // Should preserve the exact string provided in discountLabel
+        $this->assertEquals('15% Off on Dia', $variation['discountLabel']);
+        $this->assertIsString($variation['discountLabel']);
     }
 
     /**
@@ -375,9 +442,12 @@ class EkatraSDKTest extends TestCase
             
             $variation = $result['data']['variants'][0]['variations'][0];
             
-            // Should preserve the exact string provided
-            $this->assertEquals($discountText, $variation['discount'], "Failed for discount: $discountText");
-            $this->assertIsString($variation['discount'], "Discount should be string for: $discountText");
+            // Should auto-calculate percentage: (100000-80000)/100000 * 100 = 20%
+            $this->assertEquals(20.0, $variation['discount'], "Failed for discount: $discountText");
+            $this->assertIsFloat($variation['discount'], "Discount should be float for: $discountText");
+            // Should preserve the exact string provided in discountLabel
+            $this->assertEquals($discountText, $variation['discountLabel'], "Failed for discountLabel: $discountText");
+            $this->assertIsString($variation['discountLabel'], "DiscountLabel should be string for: $discountText");
         }
     }
 
@@ -405,9 +475,10 @@ class EkatraSDKTest extends TestCase
         
         $variation = $result['data']['variants'][0]['variations'][0];
         
-        // Should convert numeric to string
-        $this->assertEquals('20', $variation['discount']);
-        $this->assertIsString($variation['discount']);
+        // Should keep numeric as float
+        $this->assertEquals(20.0, $variation['discount']);
+        $this->assertIsFloat($variation['discount']);
+        $this->assertNull($variation['discountLabel']);
     }
 
     /**
@@ -434,8 +505,9 @@ class EkatraSDKTest extends TestCase
         
         $variation = $result['data']['variants'][0]['variations'][0];
         
-        // Should default to '0' when no discount and MRP is 0
-        $this->assertEquals('0', $variation['discount']);
-        $this->assertIsString($variation['discount']);
+        // Should default to 0 when no discount and MRP is 0
+        $this->assertEquals(0, $variation['discount']);
+        $this->assertIsFloat($variation['discount']);
+        $this->assertNull($variation['discountLabel']);
     }
 }

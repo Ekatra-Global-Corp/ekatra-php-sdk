@@ -135,12 +135,28 @@ jobs:
           - ✅ Comprehensive test matrix
           - ✅ Architecture validation tests
           - ✅ Performance and security tests
+          - ✅ Enhanced discount handling with discountLabel field
+          - ✅ Support for both numeric and string discount formats
+          
+          ### Discount Handling:
+          The SDK now supports enhanced discount handling with both numeric and string formats:
+          - **Numeric discount**: Provided as number (e.g., 20.5) → stored in \`discount\` field
+          - **String discount**: Provided as text (e.g., \"20% OFF on DIA\") → auto-calculates percentage in \`discount\` field, stores text in \`discountLabel\` field
+          - **Both provided**: Uses numeric for \`discount\`, string for \`discountLabel\`
+          - **Neither provided**: Auto-calculates percentage from MRP vs selling price
           
           ### Response Structure:
           \`\`\`json
           {
               \"status\": \"success|error\",
-              \"data\": {...},
+              \"data\": {
+                  \"variants\": [{
+                      \"variations\": [{
+                          \"discount\": 20.0,
+                          \"discountLabel\": \"20% OFF on DIA\"
+                      }]
+                  }]
+              },
               \"metadata\": {
                   \"validation\": {...},
                   \"dataType\": \"...\",
