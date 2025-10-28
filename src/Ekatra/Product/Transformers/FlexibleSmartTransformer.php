@@ -436,8 +436,8 @@ class FlexibleSmartTransformer
             'variations' => [
                 [
                     'sizeId' => $sizeId,
-                    'mrp' => (string) $mrp,
-                    'sellingPrice' => (string) $price,
+                    'mrp' => (float) $mrp,
+                    'sellingPrice' => (float) $price,
                     'discount' => $discount,
                     'discountLabel' => $discountLabel,
                     'availability' => $quantity > 0,
@@ -501,8 +501,8 @@ class FlexibleSmartTransformer
             'variations' => [
                 [
                     'sizeId' => $sizeId,
-                    'mrp' => (string) $mrp,
-                    'sellingPrice' => (string) $sellingPrice,
+                    'mrp' => (float) $mrp,
+                    'sellingPrice' => (float) $sellingPrice,
                     'discount' => $discount,
                     'discountLabel' => $discountLabel,
                     'availability' => $quantity > 0,
