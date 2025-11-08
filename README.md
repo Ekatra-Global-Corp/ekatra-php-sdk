@@ -105,6 +105,215 @@ if ($result['status'] === 'success') {
 }
 ```
 
+### 🔄 Product Sync Methods (NEW in v2.1.4)
+
+For bulk product syncing to Ekatra APIs, use these methods to transform minimal product data into the standardized Ekatra format.
+
+#### `syncProductData()` - Single Product (Returns Data Only)
+
+Transforms a single product and returns just the product data array. Throws exception on validation failure.
+
+**Required fields (flexible field names supported):**
+- **productId**: `productId`, `product_id`, `id`, `item_id`, `sku`, `productCode`, etc.
+- **title**: `title`, `name`, `product_name`, `product_title`, `productName`, etc.
+- **currency**: `currency`, `currency_code`, `currencyCode`, `curr`, etc.
+- **imageUrl**: `imageUrl`, `image_url`, `image_urls`, `images`, `thumbnail`, `photo`, `thumbnailUrl`, etc.
+
+```php
+use Ekatra\Product\EkatraSDK;
+use Ekatra\Product\Exceptions\EkatraValidationException;
+
+try {
+    // Accepts flexible field names
+    $productData = [
+        'product_id' => '20269',
+        'title' => 'Geometric Rose Gold Diamond Stud Earrings',
+        'currency' => 'INR',
+        'image_urls' => 'https://example.com/image1.jpg,https://example.com/image2.jpg'
+    ];
+    
+    // Returns just the product data (no wrapper)
+    $transformedProduct = EkatraSDK::syncProductData($productData);
+    
+    // $transformedProduct contains complete Ekatra structure with defaults:
+    // - productId, title, currency
+    // - searchKeywords: ""
+    // - specifications: []
+    // - offers: [{productOfferDetails: [{}]}]
+    // - variants: [{_id, color: "unknown", variations: [...], weight: 1, ...}]
+    // - sizes: [{_id, name: "freestyle"}]
+    
+} catch (EkatraValidationException $e) {
+    echo "Validation failed: " . $e->getMessage();
+    print_r($e->getErrors());
+}
+```
+
+#### `syncProductsBatch()` - Multiple Products (Batch Processing)
+
+Transforms multiple products and returns successful transformations and failures separately. Perfect for bulk operations.
+
+```php
+use Ekatra\Product\EkatraSDK;
+
+// Array of products (each with flexible field names)
+$products = [
+    [
+        'product_id' => '20269',
+        'title' => 'Product 1',
+        'currency' => 'INR',
+        'image_urls' => 'https://example.com/img1.jpg'
+    ],
+    [
+        'productId' => '20270',
+        'name' => 'Product 2',
+        'currency_code' => 'USD',
+        'images' => ['https://example.com/img2.jpg']
+    ],
+    [
+        'title' => 'Invalid Product'  // Missing required fields
+    ]
+];
+
+// Transform all products
+$result = EkatraSDK::syncProductsBatch($products);
+
+// Successful transformations
+$successfulProducts = $result['successful'];
+// Array of transformed product data
+
+// Failed transformations (with original input for retry)
+$failedProducts = $result['failed'];
+// [
+//   [
+//     'index' => 2,
+//     'input' => ['title' => 'Invalid Product', ...],
+//     'error' => 'Product ID is required',
+//     'validation' => ['errors' => [...], 'code' => 422]
+//   ]
+// ]
+
+// Summary
+$summary = $result['summary'];
+// ['total' => 3, 'successful' => 2, 'failed' => 1]
+```
+
+#### Building Event Structure for API Sync
+
+Use the batch method to transform products and build event structures for syncing to Ekatra APIs:
+
+```php
+use Ekatra\Product\EkatraSDK;
+
+// Step 1: Get raw products from your system
+$rawProducts = [
+    ['product_id' => '20269', 'title' => 'Product 1', 'currency' => 'INR', 'image_urls' => '...'],
+    ['product_id' => '20270', 'title' => 'Product 2', 'currency' => 'INR', 'image_urls' => '...'],
+    // ... more products
+];
+
+// Step 2: Transform all products
+$result = EkatraSDK::syncProductsBatch($rawProducts);
+
+// Step 3: Build event structure with successful products
+$event = [
+    'eventType' => 'PRODUCT_CREATE',
+    'eventId' => 'evt_' . time(),
+    'timestamp' => date('c'), // ISO 8601 format
+    'products' => $result['successful']  // Only successful transformations
+];
+
+// Step 4: Send to Ekatra API
+// sendToEkatraAPI($event);
+
+// Step 5: Handle failures (log, notify, retry, etc.)
+if (!empty($result['failed'])) {
+    foreach ($result['failed'] as $failure) {
+        // Log with original input for debugging/retry
+        error_log("Product at index {$failure['index']} failed: {$failure['error']}");
+        error_log("Original input: " . json_encode($failure['input']));
+        
+        // Optionally: Fix and retry
+        // $fixed = fixProductData($failure['input']);
+        // $retryResult = EkatraSDK::syncProductData($fixed);
+    }
+}
+
+// Step 6: Report summary
+echo "Processed: {$result['summary']['total']}\n";
+echo "Successful: {$result['summary']['successful']}\n";
+echo "Failed: {$result['summary']['failed']}\n";
+```
+
+#### `syncProduct()` - Single Product (With Response Wrapper)
+
+Returns the full ResponseBuilder format (status, data, metadata, message). Use this when you need validation details and error handling.
+
+```php
+use Ekatra\Product\EkatraSDK;
+
+$productData = [
+    'productId' => '20269',
+    'title' => 'Product Name',
+    'currency' => 'INR',
+    'imageUrl' => 'https://example.com/image.jpg'
+];
+
+$result = EkatraSDK::syncProduct($productData);
+
+if ($result['status'] === 'success') {
+    $product = $result['data'];
+    $metadata = $result['metadata'];
+    // Full response with validation details
+} else {
+    // Error response with validation details
+    $errors = $result['metadata']['validation']['errors'];
+}
+```
+
+#### Supported Input Formats
+
+All sync methods accept flexible field names and handle various input formats:
+
+**Field Name Variations:**
+- **Product ID**: `productId`, `product_id`, `id`, `item_id`, `sku`, `productCode`, `product_code`, etc.
+- **Title**: `title`, `name`, `product_name`, `product_title`, `productName`, `item_name`, etc.
+- **Currency**: `currency`, `currency_code`, `currencyCode`, `curr`, `curr_code`, etc.
+- **Image URL**: `imageUrl`, `image_url`, `image_urls`, `images`, `thumbnail`, `photo`, `thumbnailUrl`, `thumbnail_url`, etc.
+
+**Nested Structures:**
+```php
+// Handles nested structures automatically
+$data = [
+    'product_details' => [
+        'product_id' => '123',
+        'title' => 'Product',
+        'currency' => 'USD',
+        'image_url' => 'https://...'
+    ]
+];
+
+// Also handles: 'product', 'data', 'result' keys
+```
+
+**Image Formats:**
+```php
+// Single URL string
+'imageUrl' => 'https://example.com/image.jpg'
+
+// Comma-separated URLs (uses first)
+'image_urls' => 'url1,url2,url3'
+
+// Array of URLs (uses first)
+'images' => ['url1', 'url2', 'url3']
+
+// Array of objects
+'images' => [
+    ['url' => 'https://...'],
+    ['src' => 'https://...']
+]
+```
+
 ### ⚠️ Legacy Method (DEPRECATED - Will be removed in v3.0.0)
 
 ```php

@@ -7,6 +7,7 @@ use Ekatra\Product\Core\EkatraVariant;
 use Ekatra\Product\Exceptions\EkatraValidationException;
 use Ekatra\Product\Transformers\SmartTransformer;
 use Ekatra\Product\Transformers\FlexibleSmartTransformer;
+use Ekatra\Product\Transformers\SyncProductTransform;
 use Ekatra\Product\Validators\EducationalValidator;
 use Ekatra\Product\Helpers\ManualSetupGuide;
 use Ekatra\Product\ResponseBuilder;
@@ -473,6 +474,141 @@ class EkatraSDK
             'magento' => 'Magento API format (custom_attributes)',
             'generic' => 'Generic e-commerce format',
             'minimal' => 'Minimal format (id, name, price only)'
+        ];
+    }
+
+    /**
+     * Sync product with minimal data
+     * 
+     * Transforms minimal product data (productId, title, currency, imageUrl)
+     * to Ekatra sync format with default values.
+     * 
+     * Required fields:
+     * - productId: Product identifier
+     * - title: Product title
+     * - currency: Currency code (e.g., 'INR', 'USD')
+     * - imageUrl: Product image URL
+     * 
+     * @param array $data Must contain: productId, title, currency, imageUrl
+     * @return array Transformation result with success/error status
+     */
+    public static function syncProduct(array $data): array
+    {
+        // Validate input type
+        if (!is_array($data)) {
+            return ResponseBuilder::transformationError(
+                'Invalid input: Expected array, got ' . gettype($data)
+            );
+        }
+        
+        try {
+            $syncTransformer = new SyncProductTransform();
+            return $syncTransformer->transformToEkatra($data);
+        } catch (\Exception $e) {
+            return ResponseBuilder::transformationError(
+                'Product sync failed: ' . $e->getMessage()
+            );
+        }
+    }
+
+    /**
+     * Sync product data (returns product data only, throws exception on failure)
+     * 
+     * Transforms minimal product data to Ekatra sync format and returns
+     * just the product data array (no ResponseBuilder wrapper).
+     * 
+     * Accepts flexible field names (productId/product_id, title/name, etc.)
+     * and handles nested structures automatically.
+     * 
+     * Required fields (in any format):
+     * - productId: productId, product_id, id, item_id, sku, etc.
+     * - title: title, name, product_name, product_title, etc.
+     * - currency: currency, currency_code, currencyCode, etc.
+     * - imageUrl: imageUrl, image_url, image_urls, images, thumbnail, photo, etc.
+     * 
+     * @param array $data Product data with flexible field names
+     * @return array Transformed product data structure
+     * @throws EkatraValidationException If validation fails
+     */
+    public static function syncProductData(array $data): array
+    {
+        // Validate input type
+        if (!is_array($data)) {
+            throw new \InvalidArgumentException(
+                'Invalid input: Expected array, got ' . gettype($data)
+            );
+        }
+        
+        $syncTransformer = new SyncProductTransform();
+        return $syncTransformer->transformToEkatraData($data);
+    }
+
+    /**
+     * Sync multiple products in batch
+     * 
+     * Transforms an array of products to Ekatra sync format.
+     * Returns successful transformations and failures separately.
+     * 
+     * @param array $products Array of product data arrays
+     * @return array [
+     *   'successful' => [...],  // Array of transformed product data
+     *   'failed' => [...],       // Array of failure details
+     *   'summary' => [           // Summary counts
+     *     'total' => int,
+     *     'successful' => int,
+     *     'failed' => int
+     *   ]
+     * ]
+     */
+    public static function syncProductsBatch(array $products): array
+    {
+        if (!is_array($products)) {
+            throw new \InvalidArgumentException(
+                'Invalid input: Expected array, got ' . gettype($products)
+            );
+        }
+        
+        $successful = [];
+        $failed = [];
+        
+        foreach ($products as $index => $productData) {
+            try {
+                // Transform product
+                $transformedProduct = self::syncProductData($productData);
+                $successful[] = $transformedProduct;
+            } catch (EkatraValidationException $e) {
+                // Validation failure - include full details
+                $failed[] = [
+                    'index' => $index,
+                    'input' => $productData,
+                    'error' => $e->getMessage(),
+                    'validation' => [
+                        'errors' => $e->getErrors(),
+                        'code' => $e->getCode()
+                    ]
+                ];
+            } catch (\Exception $e) {
+                // Other exceptions
+                $failed[] = [
+                    'index' => $index,
+                    'input' => $productData,
+                    'error' => $e->getMessage(),
+                    'validation' => [
+                        'errors' => [$e->getMessage()],
+                        'code' => $e->getCode()
+                    ]
+                ];
+            }
+        }
+        
+        return [
+            'successful' => $successful,
+            'failed' => $failed,
+            'summary' => [
+                'total' => count($products),
+                'successful' => count($successful),
+                'failed' => count($failed)
+            ]
         ];
     }
 }

@@ -137,6 +137,9 @@ jobs:
           - ✅ Performance and security tests
           - ✅ Enhanced discount handling with discountLabel field
           - ✅ Support for both numeric and string discount formats
+          - ✅ Product sync methods for bulk operations (syncProductData, syncProductsBatch)
+          - ✅ Flexible field name mapping for sync operations
+          - ✅ Batch processing with error isolation
           
           ### Discount Handling:
           The SDK now supports enhanced discount handling with both numeric and string formats:
@@ -144,6 +147,14 @@ jobs:
           - **String discount**: Provided as text (e.g., \"20% OFF on DIA\") → auto-calculates percentage in \`discount\` field, stores text in \`discountLabel\` field
           - **Both provided**: Uses numeric for \`discount\`, string for \`discountLabel\`
           - **Neither provided**: Auto-calculates percentage from MRP vs selling price
+          
+          ### Product Sync Methods (NEW):
+          - **syncProductData()**: Transform single product, returns data only (throws exception on failure)
+          - **syncProductsBatch()**: Transform multiple products, returns successful + failed separately
+          - **syncProduct()**: Transform single product with full ResponseBuilder format
+          - Supports flexible field names (productId/product_id, title/name, etc.)
+          - Handles nested structures automatically
+          - Perfect for bulk product syncing to Ekatra APIs
           
           ### Response Structure:
           \`\`\`json

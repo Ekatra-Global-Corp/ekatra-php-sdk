@@ -61,6 +61,7 @@ jobs:
             'EkatraSDK::transformVariant' => function() use (\$testData) { return EkatraSDK::transformVariant(\$testData); },
             'EkatraSDK::smartTransformProduct' => function() use (\$testData) { return EkatraSDK::smartTransformProduct(\$testData); },
             'EkatraSDK::smartTransformProductFlexible' => function() use (\$testData) { return EkatraSDK::smartTransformProductFlexible(\$testData); },
+            'EkatraSDK::syncProduct' => function() use (\$testData) { return EkatraSDK::syncProduct(\$testData); },
             'EkatraProduct::toEkatraFormatWithValidation' => function() use (\$testData) { 
                 \$product = EkatraProduct::fromCustomerData(\$testData);
                 return \$product->toEkatraFormatWithValidation();
@@ -72,6 +73,18 @@ jobs:
             'FlexibleSmartTransformer::transformToEkatra' => function() use (\$testData) { 
                 \$transformer = new FlexibleSmartTransformer();
                 return \$transformer->transformToEkatra(\$testData);
+            },
+            'EkatraSDK::syncProductData' => function() use (\$testData) { 
+                try {
+                    \$productData = EkatraSDK::syncProductData(\$testData);
+                    return ['status' => 'success', 'data' => \$productData, 'metadata' => ['sdkVersion' => 'test'], 'message' => 'success'];
+                } catch (\Exception \$e) {
+                    return ['status' => 'error', 'data' => null, 'metadata' => ['sdkVersion' => 'test'], 'message' => \$e->getMessage()];
+                }
+            },
+            'EkatraSDK::syncProductsBatch' => function() use (\$testData) { 
+                \$result = EkatraSDK::syncProductsBatch([\$testData]);
+                return ['status' => 'success', 'data' => \$result, 'metadata' => ['sdkVersion' => 'test'], 'message' => 'success'];
             }
         ];
         
@@ -248,6 +261,162 @@ jobs:
             exit(0);
         } else {
             echo PHP_EOL . '❌ RESPONSE STRUCTURE INCONSISTENT!' . PHP_EOL;
+            exit(1);
+        }
+        "
+
+    - name: Test Sync Methods
+      run: |
+        php -r "
+        require 'vendor/autoload.php';
+        use Ekatra\Product\EkatraSDK;
+        use Ekatra\Product\Exceptions\EkatraValidationException;
+        
+        echo '=== SYNC METHODS TEST ===' . PHP_EOL;
+        
+        \$testData = [
+            'product_id' => '20051',
+            'title' => 'Test Product',
+            'currency' => 'INR',
+            'image_urls' => 'https://example.com/image.jpg'
+        ];
+        
+        \$allPassed = true;
+        
+        // Test 1: syncProductData() - returns data only
+        echo PHP_EOL . 'Test 1: syncProductData() returns data only' . PHP_EOL;
+        try {
+            \$productData = EkatraSDK::syncProductData(\$testData);
+            \$checks = [
+                'Returns array' => is_array(\$productData),
+                'No status field' => !isset(\$productData['status']),
+                'No metadata field' => !isset(\$productData['metadata']),
+                'Has productId' => isset(\$productData['productId']),
+                'Has title' => isset(\$productData['title']),
+                'Has variants' => isset(\$productData['variants']),
+                'Has sizes' => isset(\$productData['sizes'])
+            ];
+            
+            foreach (\$checks as \$check => \$passed) {
+                if (\$passed) {
+                    echo '  ✅ ' . \$check . PHP_EOL;
+                } else {
+                    echo '  ❌ ' . \$check . PHP_EOL;
+                    \$allPassed = false;
+                }
+            }
+        } catch (\Exception \$e) {
+            echo '  ❌ Exception: ' . \$e->getMessage() . PHP_EOL;
+            \$allPassed = false;
+        }
+        
+        // Test 2: syncProductData() throws exception on failure
+        echo PHP_EOL . 'Test 2: syncProductData() throws exception on failure' . PHP_EOL;
+        try {
+            EkatraSDK::syncProductData(['title' => 'Missing fields']);
+            echo '  ❌ Should have thrown exception' . PHP_EOL;
+            \$allPassed = false;
+        } catch (EkatraValidationException \$e) {
+            echo '  ✅ Exception thrown correctly' . PHP_EOL;
+            echo '  ✅ Error message: ' . \$e->getMessage() . PHP_EOL;
+            echo '  ✅ Has errors array: ' . (is_array(\$e->getErrors()) ? 'Yes' : 'No') . PHP_EOL;
+        } catch (\Exception \$e) {
+            echo '  ❌ Wrong exception type: ' . get_class(\$e) . PHP_EOL;
+            \$allPassed = false;
+        }
+        
+        // Test 3: syncProductsBatch() with successful products
+        echo PHP_EOL . 'Test 3: syncProductsBatch() with successful products' . PHP_EOL;
+        \$products = [
+            ['product_id' => '20269', 'title' => 'Product 1', 'currency' => 'INR', 'image_urls' => 'https://example.com/img1.jpg'],
+            ['productId' => '20270', 'name' => 'Product 2', 'currency_code' => 'USD', 'images' => ['https://example.com/img2.jpg']]
+        ];
+        
+        \$result = EkatraSDK::syncProductsBatch(\$products);
+        \$checks = [
+            'Has successful array' => isset(\$result['successful']),
+            'Has failed array' => isset(\$result['failed']),
+            'Has summary' => isset(\$result['summary']),
+            'Successful count correct' => count(\$result['successful']) === 2,
+            'Failed count correct' => count(\$result['failed']) === 0,
+            'Summary total correct' => \$result['summary']['total'] === 2,
+            'Summary successful correct' => \$result['summary']['successful'] === 2,
+            'Summary failed correct' => \$result['summary']['failed'] === 0
+        ];
+        
+        foreach (\$checks as \$check => \$passed) {
+            if (\$passed) {
+                echo '  ✅ ' . \$check . PHP_EOL;
+            } else {
+                echo '  ❌ ' . \$check . PHP_EOL;
+                \$allPassed = false;
+            }
+        }
+        
+        // Test 4: syncProductsBatch() with failed products
+        echo PHP_EOL . 'Test 4: syncProductsBatch() with failed products' . PHP_EOL;
+        \$productsWithFailures = [
+            ['productId' => '20269', 'title' => 'Valid', 'currency' => 'INR', 'imageUrl' => 'https://example.com/img1.jpg'],
+            ['title' => 'Invalid'], // Missing required fields
+            ['productId' => '20271', 'title' => 'Valid 2', 'currency' => 'USD', 'imageUrl' => 'https://example.com/img3.jpg']
+        ];
+        
+        \$result = EkatraSDK::syncProductsBatch(\$productsWithFailures);
+        \$checks = [
+            'Successful count correct' => count(\$result['successful']) === 2,
+            'Failed count correct' => count(\$result['failed']) === 1,
+            'Failed has index' => isset(\$result['failed'][0]['index']),
+            'Failed has input' => isset(\$result['failed'][0]['input']),
+            'Failed has error' => isset(\$result['failed'][0]['error']),
+            'Failed has validation' => isset(\$result['failed'][0]['validation']),
+            'Index is correct' => \$result['failed'][0]['index'] === 1
+        ];
+        
+        foreach (\$checks as \$check => \$passed) {
+            if (\$passed) {
+                echo '  ✅ ' . \$check . PHP_EOL;
+            } else {
+                echo '  ❌ ' . \$check . PHP_EOL;
+                \$allPassed = false;
+            }
+        }
+        
+        // Test 5: Event structure building
+        echo PHP_EOL . 'Test 5: Event structure building' . PHP_EOL;
+        \$batchResult = EkatraSDK::syncProductsBatch(\$products);
+        \$event = [
+            'eventType' => 'PRODUCT_CREATE',
+            'eventId' => 'evt_test',
+            'timestamp' => date('c'),
+            'products' => \$batchResult['successful']
+        ];
+        
+        \$checks = [
+            'Event has eventType' => isset(\$event['eventType']),
+            'Event has eventId' => isset(\$event['eventId']),
+            'Event has timestamp' => isset(\$event['timestamp']),
+            'Event has products' => isset(\$event['products']),
+            'Products count correct' => count(\$event['products']) === 2,
+            'First product has productId' => isset(\$event['products'][0]['productId']),
+            'First product has variants' => isset(\$event['products'][0]['variants']),
+            'First product has sizes' => isset(\$event['products'][0]['sizes'])
+        ];
+        
+        foreach (\$checks as \$check => \$passed) {
+            if (\$passed) {
+                echo '  ✅ ' . \$check . PHP_EOL;
+            } else {
+                echo '  ❌ ' . \$check . PHP_EOL;
+                \$allPassed = false;
+            }
+        }
+        
+        echo PHP_EOL . '=== FINAL RESULT ===' . PHP_EOL;
+        if (\$allPassed) {
+            echo '🎉 ALL SYNC METHODS TESTS PASSED!' . PHP_EOL;
+            exit(0);
+        } else {
+            echo '❌ SOME SYNC METHODS TESTS FAILED!' . PHP_EOL;
             exit(1);
         }
         "
