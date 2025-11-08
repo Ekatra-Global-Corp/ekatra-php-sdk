@@ -76,15 +76,16 @@ jobs:
             },
             'EkatraSDK::syncProductData' => function() use (\$testData) { 
                 try {
-                    \$productData = EkatraSDK::syncProductData(\$testData);
-                    return ['status' => 'success', 'data' => \$productData, 'metadata' => ['sdkVersion' => 'test'], 'message' => 'success'];
+                    // syncProductData returns just the product data array (no wrapper)
+                    return EkatraSDK::syncProductData(\$testData);
                 } catch (\Exception \$e) {
-                    return ['status' => 'error', 'data' => null, 'metadata' => ['sdkVersion' => 'test'], 'message' => \$e->getMessage()];
+                    // Return error structure for test validation
+                    return ['error' => true, 'message' => \$e->getMessage()];
                 }
             },
             'EkatraSDK::syncProductsBatch' => function() use (\$testData) { 
-                \$result = EkatraSDK::syncProductsBatch([\$testData]);
-                return ['status' => 'success', 'data' => \$result, 'metadata' => ['sdkVersion' => 'test'], 'message' => 'success'];
+                // syncProductsBatch returns batch result structure
+                return EkatraSDK::syncProductsBatch([\$testData]);
             }
         ];
         
@@ -102,13 +103,40 @@ jobs:
             \$expectedVersion = \$composer['version'] ?? 'unknown';
         }
         
-        \$checks = [
-            'Has status' => isset(\$result['status']),
-            'Has metadata' => isset(\$result['metadata']),
-            'Has message' => isset(\$result['message']),
-            'Has SDK version' => isset(\$result['metadata']['sdkVersion']),
-            'SDK version matches composer.json' => \$result['metadata']['sdkVersion'] === \$expectedVersion
-        ];
+        // Special handling for sync methods that don't return ResponseBuilder format
+        if (\$testName === 'EkatraSDK::syncProductData') {
+            // syncProductData returns just product data array, not ResponseBuilder format
+            \$checks = [
+                'Returns array' => is_array(\$result),
+                'Has productId' => isset(\$result['productId']),
+                'Has title' => isset(\$result['title']),
+                'Has currency' => isset(\$result['currency']),
+                'Has variants' => isset(\$result['variants']),
+                'Has sizes' => isset(\$result['sizes']),
+                'No status field' => !isset(\$result['status']),
+                'No metadata field' => !isset(\$result['metadata'])
+            ];
+        } elseif (\$testName === 'EkatraSDK::syncProductsBatch') {
+            // syncProductsBatch returns batch result structure
+            \$checks = [
+                'Returns array' => is_array(\$result),
+                'Has successful array' => isset(\$result['successful']),
+                'Has failed array' => isset(\$result['failed']),
+                'Has summary' => isset(\$result['summary']),
+                'Summary has total' => isset(\$result['summary']['total']),
+                'Summary has successful count' => isset(\$result['summary']['successful']),
+                'Summary has failed count' => isset(\$result['summary']['failed'])
+            ];
+        } else {
+            // Standard ResponseBuilder format checks for other methods
+            \$checks = [
+                'Has status' => isset(\$result['status']),
+                'Has metadata' => isset(\$result['metadata']),
+                'Has message' => isset(\$result['message']),
+                'Has SDK version' => isset(\$result['metadata']['sdkVersion']),
+                'SDK version matches composer.json' => \$result['metadata']['sdkVersion'] === \$expectedVersion
+            ];
+        }
         
         // Additional checks for FlexibleSmartTransformer
         if (\$testName === 'FlexibleSmartTransformer::transformToEkatra') {
@@ -146,9 +174,14 @@ jobs:
         foreach (\$tests as \$testName => \$testFunction) {
             try {
                 \$result = \$testFunction();
-                \$sdkVersions[] = \$result['metadata']['sdkVersion'] ?? 'missing';
+                // Skip version check for sync methods that don't return ResponseBuilder format
+                if (\$testName !== 'EkatraSDK::syncProductData' && \$testName !== 'EkatraSDK::syncProductsBatch') {
+                    \$sdkVersions[] = \$result['metadata']['sdkVersion'] ?? 'missing';
+                }
             } catch (\Exception \$e) {
-                \$sdkVersions[] = 'error';
+                if (\$testName !== 'EkatraSDK::syncProductData' && \$testName !== 'EkatraSDK::syncProductsBatch') {
+                    \$sdkVersions[] = 'error';
+                }
             }
         }
         
