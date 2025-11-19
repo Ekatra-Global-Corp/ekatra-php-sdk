@@ -55,7 +55,7 @@ class SyncProductTransformTest extends TestCase
         $this->assertCount(1, $productData['variants']);
         
         $variant = $productData['variants'][0];
-        $this->assertArrayHasKey('_id', $variant);
+        $this->assertArrayHasKey('id', $variant);
         $this->assertEquals('unknown', $variant['color']);
         $this->assertEquals(1, $variant['weight']);
         $this->assertIsString($variant['thumbnail']);
@@ -91,7 +91,7 @@ class SyncProductTransformTest extends TestCase
         $this->assertCount(1, $productData['sizes']);
         
         $size = $productData['sizes'][0];
-        $this->assertArrayHasKey('_id', $size);
+        $this->assertArrayHasKey('id', $size);
         $this->assertEquals('freestyle', $size['name']);
     }
 

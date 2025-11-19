@@ -14,6 +14,7 @@ use Ekatra\Product\Exceptions\EkatraValidationException;
  */
 class SyncProductTransform
 {
+
     /**
      * Transform minimal product data to Ekatra sync format
      * 
@@ -306,7 +307,7 @@ class SyncProductTransform
         $sizeId = $this->generateId();
         
         return [
-            '_id' => $variantId,
+            'id' => $variantId,
             'color' => 'unknown',
             'variations' => [
                 [
@@ -336,16 +337,178 @@ class SyncProductTransform
             return [];
         }
         
+        $mimeType = $this->determineMimeType($imageUrl);
+        $playerType = $this->determinePlayerType($mimeType, $imageUrl);
+        
         return [
             [
                 'mediaType' => 'IMAGE',
                 'thumbnailUrl' => $imageUrl,
                 'playUrl' => $imageUrl,
+                'mimeType' => $mimeType,
+                'playerTypeEnum' => $playerType,
                 'weight' => 0,
                 'duration' => 0,
                 'size' => 0
             ]
         ];
+    }
+
+    /**
+     * Determine MIME type from URL
+     * 
+     * Uses smart hybrid approach (fully automatic):
+     * 1. First tries extension-based detection (fast, works 99% of the time)
+     * 2. Only if extension detection fails (returns 'application/octet-stream'),
+     *    then tries HTTP HEAD request as fallback (more accurate but slower)
+     * 
+     * This ensures:
+     * - Fast performance for batch operations (extension-based is instant)
+     * - Accurate detection when extension is missing (HTTP fallback)
+     * - No user configuration needed - works automatically
+     * 
+     * Based on Java implementation: checks extension after removing query parameters
+     * 
+     * @param string $url The URL to analyze
+     * @return string MIME type (defaults to 'application/octet-stream' if unknown)
+     */
+    private function determineMimeType(string $url): string
+    {
+        // Step 1: Try fast extension-based detection first
+        $mimeType = $this->getMimeTypeFromExtension($url);
+        
+        // Step 2: Only if extension detection failed (unknown type), try HTTP
+        // This way HTTP is only used when needed, keeping batch operations fast
+        if ($mimeType === 'application/octet-stream') {
+            $httpMimeType = $this->getMimeTypeFromHttp($url);
+            if ($httpMimeType !== null) {
+                return $httpMimeType;
+            }
+        }
+        
+        return $mimeType;
+    }
+
+    /**
+     * Get MIME type from HTTP HEAD request (fallback method)
+     * 
+     * Only called automatically when extension-based detection fails.
+     * More accurate but slower - requires network connectivity.
+     * Uses very short timeouts to avoid slowing down batch operations.
+     * 
+     * @param string $url The URL to check
+     * @return string|null MIME type if successful, null on failure
+     */
+    private function getMimeTypeFromHttp(string $url): ?string
+    {
+        // Validate URL
+        if (!filter_var($url, FILTER_VALIDATE_URL)) {
+            return null;
+        }
+        
+        // Only allow HTTP/HTTPS protocols for security
+        $scheme = parse_url($url, PHP_URL_SCHEME);
+        if (!in_array(strtolower($scheme), ['http', 'https'])) {
+            return null;
+        }
+        
+        $ch = curl_init($url);
+        if ($ch === false) {
+            return null;
+        }
+        
+        // Use very short timeouts to avoid blocking batch operations
+        curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_HEADER => true,
+            CURLOPT_NOBODY => true, // HEAD request only (no body download)
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_MAXREDIRS => 2, // Limit redirects
+            CURLOPT_TIMEOUT => 1, // 1 second total timeout (very fast)
+            CURLOPT_CONNECTTIMEOUT => 0.5, // 0.5 second connection timeout
+            CURLOPT_SSL_VERIFYPEER => true,
+            CURLOPT_USERAGENT => 'Ekatra-PHP-SDK/2.1.4'
+        ]);
+        
+        curl_exec($ch);
+        $contentType = curl_getinfo($ch, CURLINFO_CONTENT_TYPE);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $error = curl_error($ch);
+        curl_close($ch);
+        
+        // Only return if successful and Content-Type is available
+        if ($httpCode >= 200 && $httpCode < 300 && !empty($contentType) && empty($error)) {
+            // Remove charset and other parameters (e.g., "image/jpeg; charset=utf-8" -> "image/jpeg")
+            $mimeType = trim(explode(';', $contentType)[0]);
+            return !empty($mimeType) ? $mimeType : null;
+        }
+        
+        return null;
+    }
+
+    /**
+     * Get MIME type from file extension
+     * Fast, reliable, works offline
+     * 
+     * @param string $url The URL to analyze
+     * @return string MIME type (defaults to 'application/octet-stream' if unknown)
+     */
+    private function getMimeTypeFromExtension(string $url): string
+    {
+        // Remove query parameters
+        $queryIndex = strpos($url, '?');
+        $cleanUrl = ($queryIndex !== false) ? substr($url, 0, $queryIndex) : $url;
+        
+        // Convert to lowercase for comparison
+        $lowerCaseUrl = strtolower($cleanUrl);
+        
+        // Check file extensions (matching Java implementation)
+        if (preg_match('/\.(jpg|jpeg|webp)$/', $lowerCaseUrl)) {
+            return 'image/jpeg';
+        } elseif (preg_match('/\.png$/', $lowerCaseUrl)) {
+            return 'image/png';
+        } elseif (preg_match('/\.gif$/', $lowerCaseUrl)) {
+            return 'image/gif';
+        } elseif (preg_match('/\.mp4$/', $lowerCaseUrl)) {
+            return 'video/mp4';
+        } elseif (preg_match('/\.webm$/', $lowerCaseUrl)) {
+            return 'video/webm';
+        } else {
+            return 'application/octet-stream';
+        }
+    }
+
+    /**
+     * Determine player type from MIME type or URL extension
+     * Based on Java implementation: checks MIME type first, then falls back to URL
+     * 
+     * @param string|null $mimeType The MIME type (if available)
+     * @param string|null $playUrl The URL to analyze as fallback
+     * @return string Player type ('IMAGE', 'VIDEO', or 'UNKNOWN')
+     */
+    private function determinePlayerType(?string $mimeType, ?string $playUrl): string
+    {
+        // First, check MIME type
+        if ($mimeType !== null) {
+            if (strpos($mimeType, 'image/') === 0) {
+                return 'IMAGE';
+            } elseif (strpos($mimeType, 'video/') === 0) {
+                return 'VIDEO';
+            }
+        }
+        
+        // Fallback: determine by URL extension
+        if ($playUrl !== null) {
+            $lowerCaseUrl = strtolower($playUrl);
+            
+            if (preg_match('/\.(mp4|webm)$/', $lowerCaseUrl) || strpos($lowerCaseUrl, '.mp4') !== false) {
+                return 'VIDEO';
+            } elseif (preg_match('/\.(jpg|jpeg|png|webp|gif)$/', $lowerCaseUrl)) {
+                return 'IMAGE';
+            }
+        }
+        
+        return 'UNKNOWN';
     }
 
     /**
@@ -357,7 +520,7 @@ class SyncProductTransform
         
         foreach ($variant['variations'] as $variation) {
             $sizes[] = [
-                '_id' => $variation['sizeId'],
+                'id' => $variation['sizeId'],
                 'name' => $variation['size']
             ];
         }
