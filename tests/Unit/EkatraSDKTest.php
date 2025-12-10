@@ -510,4 +510,41 @@ class EkatraSDKTest extends TestCase
         $this->assertIsFloat($variation['discount']);
         $this->assertNull($variation['discountLabel']);
     }
+
+    /**
+     * Test that products with both MRP and selling price as 0 are accepted
+     * This covers the Kirtilals use case where prices are set to 0
+     */
+    public function testProductWithZeroPricesAccepted()
+    {
+        $customerData = [
+            'product_id' => 20051,
+            'title' => 'Multicolor Gemstone Orb Earrings',
+            'description' => 'These opulent earrings showcase a vibrant palette of gemstones.',
+            'currency' => 'INR',
+            'existing_url' => 'https://staging-3.kirtilals.com/42',
+            'product_keywords' => 'earrings,studs',
+            'variant_name' => 'earrings',
+            'variant_quantity' => 0,
+            'variant_mrp' => 0.0,  // Zero MRP
+            'variant_selling_price' => 0.0,  // Zero selling price
+            'image_urls' => 'https://example.com/image.jpg'
+        ];
+        
+        $result = EkatraSDK::smartTransformProductFlexible($customerData);
+        
+        // Should succeed (not throw "No variant data found" error)
+        $this->assertEquals('success', $result['status']);
+        $this->assertArrayHasKey('data', $result);
+        $this->assertArrayHasKey('variants', $result['data']);
+        $this->assertNotEmpty($result['data']['variants']);
+        
+        $variation = $result['data']['variants'][0]['variations'][0];
+        
+        // Should preserve 0 values
+        $this->assertEquals(0.0, $variation['mrp']);
+        $this->assertEquals(0.0, $variation['sellingPrice']);
+        $this->assertIsFloat($variation['mrp']);
+        $this->assertIsFloat($variation['sellingPrice']);
+    }
 }

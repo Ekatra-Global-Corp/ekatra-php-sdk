@@ -134,7 +134,8 @@ class FlexibleSmartTransformer
     private function findValueByFields($data, $fields)
     {
         foreach ($fields as $field) {
-            if (isset($data[$field]) && !empty($data[$field])) {
+            // Use isset() only to allow 0 values (empty() would reject 0, 0.0, "0", false, null, "")
+            if (isset($data[$field])) {
                 return $data[$field];
             }
         }
@@ -292,7 +293,8 @@ class FlexibleSmartTransformer
         }
         
         // Check for variant data (but allow default variant creation for minimal formats)
-        $hasVariantData = !empty($data['variant_mrp']) || !empty($data['variants']) || !empty($data['variant_selling_price']) || !empty($data['price']);
+        // Use isset() for numeric fields to allow 0 values, !empty() for arrays to require at least one element
+        $hasVariantData = isset($data['variant_mrp']) || !empty($data['variants']) || isset($data['variant_selling_price']) || isset($data['price']);
         $isMinimalFormat = empty($data['description']) && empty($data['currency']) && empty($data['url']);
         
         if (!$hasVariantData && !$isMinimalFormat) {
@@ -367,7 +369,8 @@ class FlexibleSmartTransformer
             }
         }
         // Handle single variant (SIMPLE_SINGLE_VARIANT format)
-        elseif (!empty($data['variant_mrp']) && !empty($data['variant_selling_price'])) {
+        // Use isset() to allow 0 values for prices
+        elseif (isset($data['variant_mrp']) && isset($data['variant_selling_price'])) {
             $variant = $this->buildSingleVariant($data);
             $ekatraData['variants'][] = $variant;
         }
