@@ -58,6 +58,9 @@
     },
     "config": {
         "sort-packages": true,
+        "platform": {
+            "php": "8.3.28"
+        },
         "allow-plugins": {
             "composer/package-versions-deprecated": true
         },
