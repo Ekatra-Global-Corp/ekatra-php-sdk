@@ -79,7 +79,10 @@ jobs:
         extensions: mbstring, xml, curl, json
 
     - name: Install dependencies
-      run: composer install --prefer-dist --no-progress --no-interaction
+      run: |
+        # Use platform PHP 8.3.28 to match the lock file we generated
+        composer config platform.php 8.3.28
+        composer install --prefer-dist --no-progress --no-interaction
 
     - name: Run security audit
       run: composer audit
