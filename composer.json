@@ -3,7 +3,7 @@
     "description": "Ekatra Product SDK for PHP - Transform your product data into Ekatra Co-Deciding format",
     "type": "library",
     "license": "MIT",
-    "version": "2.1.7",
+    "version": "2.1.8",
     "authors": [
         {
             "name": "Ekatra Global Corp",
@@ -54,7 +54,7 @@
         ]
     },
     "conflict": {
-        "symfony/http-foundation": "<5.4.50|>=6.0.0,<6.4.29|>=7.0.0,<7.3.7"
+        "symfony/http-foundation": ">=5.0.0,<5.4.50|>=6.0.0,<6.4.29|>=7.0.0,<7.3.7"
     },
     "config": {
         "sort-packages": true,
