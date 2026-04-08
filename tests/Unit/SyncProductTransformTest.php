@@ -31,6 +31,7 @@ class SyncProductTransformTest extends TestCase
         $this->assertEquals('6429', $productData['productId']);
         $this->assertEquals('Floral Diamond Bracelet', $productData['title']);
         $this->assertEquals('INR', $productData['currency']);
+        $this->assertTrue($productData['active']);
         $this->assertEquals('', $productData['searchKeywords']);
         $this->assertIsArray($productData['specifications']);
         $this->assertEmpty($productData['specifications']);
@@ -184,6 +185,57 @@ class SyncProductTransformTest extends TestCase
         $this->assertEquals('success', $result['status']);
         $this->assertIsArray($result['data']);
         $this->assertEquals('6429', $result['data']['productId']);
+    }
+
+    public function testSyncProductActiveDefaultsToTrueWhenOmitted()
+    {
+        $base = [
+            'productId' => '6429',
+            'title' => 'Floral Diamond Bracelet',
+            'currency' => 'INR',
+            'imageUrl' => 'https://example.com/p.jpg',
+        ];
+        $result = EkatraSDK::syncProduct($base);
+        $this->assertTrue($result['data']['active']);
+    }
+
+    public function testSyncProductActiveFalseWhenSet()
+    {
+        $data = [
+            'productId' => '6429',
+            'title' => 'Floral Diamond Bracelet',
+            'currency' => 'INR',
+            'imageUrl' => 'https://example.com/p.jpg',
+            'active' => false,
+        ];
+        $result = EkatraSDK::syncProduct($data);
+        $this->assertFalse($result['data']['active']);
+    }
+
+    public function testSyncProductActiveTrueWhenExplicitlySet()
+    {
+        $data = [
+            'productId' => '6429',
+            'title' => 'Floral Diamond Bracelet',
+            'currency' => 'INR',
+            'imageUrl' => 'https://example.com/p.jpg',
+            'active' => true,
+        ];
+        $result = EkatraSDK::syncProduct($data);
+        $this->assertTrue($result['data']['active']);
+    }
+
+    public function testSyncProductActiveAcceptsIsActiveAlias()
+    {
+        $data = [
+            'productId' => '6429',
+            'title' => 'Floral Diamond Bracelet',
+            'currency' => 'INR',
+            'imageUrl' => 'https://example.com/p.jpg',
+            'is_active' => false,
+        ];
+        $result = EkatraSDK::syncProduct($data);
+        $this->assertFalse($result['data']['active']);
     }
 
     public function testSyncProductStringTypes()

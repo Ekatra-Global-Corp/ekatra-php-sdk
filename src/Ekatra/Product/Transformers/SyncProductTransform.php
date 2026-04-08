@@ -130,7 +130,8 @@ class SyncProductTransform
             'thumbnail', 'thumb', 'thumbUrl', 'thumb_url', 'mainImage', 'main_image',
             'primaryImage', 'primary_image', 'featuredImage', 'featured_image',
             'imageUrl', 'imageUrls', 'ImageURLs', 'imageUrls'
-        ]
+        ],
+        'active' => ['active', 'is_active', 'isActive']
     ];
 
     /**
@@ -228,6 +229,40 @@ class SyncProductTransform
     }
 
     /**
+     * Whether $data contains a key matching $key (case-insensitive).
+     */
+    private function arrayKeyExistsCaseInsensitive($data, string $key): bool
+    {
+        if (array_key_exists($key, $data)) {
+            return true;
+        }
+        $keyLower = strtolower($key);
+        foreach ($data as $dataKey => $_) {
+            if (strtolower((string) $dataKey) === $keyLower) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * First mapped key present in $data wins; value returned as-is (including null/false).
+     * If none present, returns ['present' => false].
+     */
+    private function getOptionalMappedField($data, array $fields): array
+    {
+        foreach ($fields as $field) {
+            if ($this->arrayKeyExistsCaseInsensitive($data, $field)) {
+                return [
+                    'present' => true,
+                    'value' => $this->getValueCaseInsensitive($data, $field),
+                ];
+            }
+        }
+        return ['present' => false, 'value' => null];
+    }
+
+    /**
      * Extract image URL from various formats
      */
     private function extractImageUrl($value)
@@ -273,6 +308,9 @@ class SyncProductTransform
         $title = (string) $this->findValueByFields($data, $this->fieldMappings['title']);
         $currency = (string) $this->findValueByFields($data, $this->fieldMappings['currency']);
         $imageUrl = (string) $this->findValueByFields($data, $this->fieldMappings['imageUrl']);
+
+        $activeField = $this->getOptionalMappedField($data, $this->fieldMappings['active']);
+        $active = $activeField['present'] ? $activeField['value'] : true;
         
         // Build default variant
         $variant = $this->buildDefaultVariant($imageUrl);
@@ -284,6 +322,7 @@ class SyncProductTransform
             'productId' => $productId,
             'title' => $title,
             'currency' => $currency,
+            'active' => $active,
             'searchKeywords' => '',
             'specifications' => [],
             'offers' => [
