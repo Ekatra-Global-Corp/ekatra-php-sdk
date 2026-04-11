@@ -119,6 +119,13 @@ Transforms a single product and returns just the product data array. Throws exce
 - **currency**: `currency`, `currency_code`, `currencyCode`, `curr`, etc.
 - **imageUrl**: `imageUrl`, `image_url`, `image_urls`, `images`, `thumbnail`, `photo`, `thumbnailUrl`, etc.
 
+**Optional field — product availability (`active`):**
+
+- Maps to the Ekatra product model’s `active` flag (whether the product should be treated as available/live).
+- **If you omit `active`:** the sync transform sets **`active: true`** on the output payload (default: product is active).
+- **If you set `active`:** the value is passed through **as-is** (use a real PHP boolean: `true` or `false`). Aliases: `active`, `is_active`, `isActive`.
+- To **deactivate** a product on sync, include **`'active' => false`** (or `'is_active' => false`) in your input.
+
 ```php
 use Ekatra\Product\EkatraSDK;
 use Ekatra\Product\Exceptions\EkatraValidationException;
@@ -129,14 +136,15 @@ try {
         'product_id' => '20269',
         'title' => 'Geometric Rose Gold Diamond Stud Earrings',
         'currency' => 'INR',
-        'image_urls' => 'https://example.com/image1.jpg,https://example.com/image2.jpg'
+        'image_urls' => 'https://example.com/image1.jpg,https://example.com/image2.jpg',
+        // 'active' => false,  // optional: omit for true, or set false to mark inactive
     ];
     
     // Returns just the product data (no wrapper)
     $transformedProduct = EkatraSDK::syncProductData($productData);
     
     // $transformedProduct contains complete Ekatra structure with defaults:
-    // - productId, title, currency
+    // - productId, title, currency, active (true if not provided in input)
     // - searchKeywords: ""
     // - specifications: []
     // - offers: [{productOfferDetails: [{}]}]
@@ -168,7 +176,8 @@ $products = [
         'productId' => '20270',
         'name' => 'Product 2',
         'currency_code' => 'USD',
-        'images' => ['https://example.com/img2.jpg']
+        'images' => ['https://example.com/img2.jpg'],
+        'active' => false, // optional: sync payload will include active: false
     ],
     [
         'title' => 'Invalid Product'  // Missing required fields
@@ -256,7 +265,8 @@ $productData = [
     'productId' => '20269',
     'title' => 'Product Name',
     'currency' => 'INR',
-    'imageUrl' => 'https://example.com/image.jpg'
+    'imageUrl' => 'https://example.com/image.jpg',
+    // 'active' => false, // optional; omitted => active: true in $result['data']
 ];
 
 $result = EkatraSDK::syncProduct($productData);
@@ -264,6 +274,7 @@ $result = EkatraSDK::syncProduct($productData);
 if ($result['status'] === 'success') {
     $product = $result['data'];
     $metadata = $result['metadata'];
+    // $product['active']: true by default when omitted from input; otherwise your value as-is
     // Full response with validation details
 } else {
     // Error response with validation details
@@ -280,6 +291,7 @@ All sync methods accept flexible field names and handle various input formats:
 - **Title**: `title`, `name`, `product_name`, `product_title`, `productName`, `item_name`, etc.
 - **Currency**: `currency`, `currency_code`, `currencyCode`, `curr`, `curr_code`, etc.
 - **Image URL**: `imageUrl`, `image_url`, `image_urls`, `images`, `thumbnail`, `photo`, `thumbnailUrl`, `thumbnail_url`, etc.
+- **Active (optional)**: `active`, `is_active`, `isActive` — output always includes `active`; omitted input defaults to `true`.
 
 **Nested Structures:**
 ```php
@@ -1133,6 +1145,10 @@ For support and questions:
 - Email: support@ekatraglobal.com
 
 ## Changelog
+
+### Unreleased
+
+- **Product sync**: Transformed product payload includes **`active`**. If your input does not set `active` (or `is_active` / `isActive`), the SDK sets **`active: true`**. If you set it explicitly, that value is used as-is (e.g. **`'active' => false`** to mark a product inactive when syncing to Ekatra). Bump `composer.json` and tag the next patch (e.g. `v2.1.9`) when you publish.
 
 ### Version 1.0.0
 
