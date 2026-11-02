@@ -2,6 +2,7 @@
 
 namespace Ekatra\Product\Transformers;
 
+use Ekatra\Product\EkatraSDK;
 use Ekatra\Product\ResponseBuilder;
 use Ekatra\Product\Exceptions\EkatraValidationException;
 
@@ -435,54 +436,141 @@ class SyncProductTransform
      * More accurate but slower - requires network connectivity.
      * Uses very short timeouts to avoid slowing down batch operations.
      * 
+     * Every hop (including redirects) must be http/https and resolve only to
+     * public IP addresses, so customer-supplied URLs cannot reach internal
+     * services (SSRF). The resolved IP is pinned for the request to prevent
+     * DNS rebinding between the check and the connection.
+     *
      * @param string $url The URL to check
      * @return string|null MIME type if successful, null on failure
      */
     private function getMimeTypeFromHttp(string $url): ?string
     {
-        // Validate URL
-        if (!filter_var($url, FILTER_VALIDATE_URL)) {
+        if (!function_exists('curl_init')) {
             return null;
         }
-        
-        // Only allow HTTP/HTTPS protocols for security
-        $scheme = parse_url($url, PHP_URL_SCHEME);
-        if (!in_array(strtolower($scheme), ['http', 'https'])) {
-            return null;
-        }
-        
-        $ch = curl_init($url);
+
+        $ch = curl_init();
         if ($ch === false) {
             return null;
         }
-        
+
         // Use very short timeouts to avoid blocking batch operations
         curl_setopt_array($ch, [
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_HEADER => true,
             CURLOPT_NOBODY => true, // HEAD request only (no body download)
-            CURLOPT_FOLLOWLOCATION => true,
-            CURLOPT_MAXREDIRS => 2, // Limit redirects
-            CURLOPT_TIMEOUT => 1, // 1 second total timeout (very fast)
-            CURLOPT_CONNECTTIMEOUT => 0.5, // 0.5 second connection timeout
+            CURLOPT_FOLLOWLOCATION => false, // Redirects are followed manually so each hop is validated
+            CURLOPT_PROTOCOLS => CURLPROTO_HTTP | CURLPROTO_HTTPS,
+            CURLOPT_NOSIGNAL => true, // Required for sub-second timeouts
             CURLOPT_SSL_VERIFYPEER => true,
-            CURLOPT_USERAGENT => 'Ekatra-PHP-SDK/2.1.4'
+            CURLOPT_USERAGENT => 'Ekatra-PHP-SDK/' . EkatraSDK::version()
         ]);
-        
-        curl_exec($ch);
-        $contentType = curl_getinfo($ch, CURLINFO_CONTENT_TYPE);
-        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        $error = curl_error($ch);
-        curl_close($ch);
-        
-        // Only return if successful and Content-Type is available
-        if ($httpCode >= 200 && $httpCode < 300 && !empty($contentType) && empty($error)) {
-            // Remove charset and other parameters (e.g., "image/jpeg; charset=utf-8" -> "image/jpeg")
-            $mimeType = trim(explode(';', $contentType)[0]);
-            return !empty($mimeType) ? $mimeType : null;
+
+        $mimeType = null;
+        $maxRedirects = 2;
+        $deadline = microtime(true) + 1.0; // 1 second total budget across all hops
+
+        for ($hop = 0; $hop <= $maxRedirects; $hop++) {
+            $target = $this->resolvePublicHttpTarget($url);
+            $remainingMs = (int) (($deadline - microtime(true)) * 1000);
+            if ($target === null || $remainingMs <= 0) {
+                break;
+            }
+
+            // Same handle across hops so same-host redirects reuse the connection
+            curl_setopt_array($ch, [
+                CURLOPT_URL => $url,
+                CURLOPT_RESOLVE => [$target['host'] . ':' . $target['port'] . ':' . $target['ip']],
+                CURLOPT_TIMEOUT_MS => $remainingMs,
+                CURLOPT_CONNECTTIMEOUT_MS => min(500, $remainingMs),
+            ]);
+
+            curl_exec($ch);
+            $contentType = curl_getinfo($ch, CURLINFO_CONTENT_TYPE);
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            $redirectUrl = curl_getinfo($ch, CURLINFO_REDIRECT_URL);
+
+            if (curl_errno($ch) !== 0) {
+                break;
+            }
+
+            if ($httpCode >= 300 && $httpCode < 400 && !empty($redirectUrl)) {
+                $url = $redirectUrl;
+                continue;
+            }
+
+            // Only return if successful and Content-Type is available
+            if ($httpCode >= 200 && $httpCode < 300 && !empty($contentType)) {
+                // Remove charset and other parameters (e.g., "image/jpeg; charset=utf-8" -> "image/jpeg")
+                $mimeType = trim(explode(';', $contentType)[0]) ?: null;
+            }
+            break;
         }
-        
-        return null;
+
+        // curl_close() is a no-op since PHP 8.0 and deprecated in 8.5
+        if (PHP_VERSION_ID < 80000) {
+            curl_close($ch);
+        }
+
+        return $mimeType;
+    }
+
+    /**
+     * Validate that a URL is http/https and its host resolves only to public IPs
+     *
+     * @param string $url The URL to validate
+     * @return array|null ['host' => string, 'port' => int, 'ip' => string] or null if not allowed
+     */
+    private function resolvePublicHttpTarget(string $url): ?array
+    {
+        if (!filter_var($url, FILTER_VALIDATE_URL)) {
+            return null;
+        }
+
+        $parts = parse_url($url);
+        $scheme = strtolower($parts['scheme'] ?? '');
+        if (!in_array($scheme, ['http', 'https'], true) || empty($parts['host'])) {
+            return null;
+        }
+
+        $host = trim($parts['host'], '[]');
+        $port = $parts['port'] ?? ($scheme === 'https' ? 443 : 80);
+
+        if (filter_var($host, FILTER_VALIDATE_IP)) {
+            $ips = [$host];
+        } else {
+            $ips = [];
+            $records = @dns_get_record($host, DNS_A | DNS_AAAA);
+            foreach ($records ?: [] as $record) {
+                if (isset($record['ip'])) {
+                    $ips[] = $record['ip'];
+                } elseif (isset($record['ipv6'])) {
+                    $ips[] = $record['ipv6'];
+                }
+            }
+            if (empty($ips)) {
+                $ips = @gethostbynamel($host) ?: [];
+            }
+        }
+
+        if (empty($ips)) {
+            return null;
+        }
+
+        // Reject the host if any address is private, loopback, link-local or reserved
+        foreach ($ips as $ip) {
+            if (!filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)) {
+                return null;
+            }
+        }
+
+        $ip = $ips[0];
+        return [
+            'host' => $host,
+            'port' => $port,
+            'ip' => strpos($ip, ':') !== false ? '[' . $ip . ']' : $ip,
+        ];
     }
 
     /**
