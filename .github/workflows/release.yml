@@ -5,22 +5,17 @@ on:
     tags:
       - 'v*'
 
+permissions:
+  contents: read
+
 jobs:
+  # Full PHP x Laravel matrix, including mapping snapshot tests
   test:
+    uses: ./.github/workflows/php.yml
+
+  architecture:
     runs-on: ubuntu-latest
-    name: Run Tests
-    
-    strategy:
-      matrix:
-        php-version: [7.4, 8.0, 8.1, 8.2, 8.3]
-        laravel-version: [6, 7, 8, 9, 10, 11]
-        exclude:
-          - php-version: 7.4
-            laravel-version: 11
-          - php-version: 8.0
-            laravel-version: 11
-          - php-version: 8.1
-            laravel-version: 11
+    name: Release Checks
 
     steps:
     - name: Checkout code
@@ -29,17 +24,21 @@ jobs:
     - name: Setup PHP
       uses: shivammathur/setup-php@v2
       with:
-        php-version: ${{ matrix.php-version }}
+        php-version: '8.4'
         extensions: mbstring, xml, curl, json
 
-    - name: Install dependencies
+    - name: Tag must match composer.json version
       run: |
-        # Remove composer.lock to force fresh resolution for each PHP/Laravel combination
-        rm -f composer.lock
-        composer install --prefer-dist --no-progress --no-interaction
+        TAG="${GITHUB_REF_NAME#v}"
+        VERSION=$(php -r 'echo json_decode(file_get_contents("composer.json"), true)["version"] ?? "";')
+        if [ "$TAG" != "$VERSION" ]; then
+          echo "❌ Tag $GITHUB_REF_NAME does not match composer.json version $VERSION"
+          exit 1
+        fi
+        echo "✅ Tag matches composer.json version $VERSION"
 
-    - name: Run Unit Tests
-      run: composer test
+    - name: Install dependencies
+      run: composer update --prefer-dist --no-progress --no-interaction
 
     - name: Run Architecture Tests
       run: |
@@ -110,8 +109,8 @@ jobs:
   create-draft-release:
     runs-on: ubuntu-latest
     name: Create Draft Release
-    needs: test
-    
+    needs: [test, architecture]
+
     permissions:
       contents: write
 
@@ -121,12 +120,20 @@ jobs:
 
     - name: Create Draft Release
       run: |
+        # Tags with a suffix (v2.2.0-RC1, v2.2.0-beta.1) are pre-releases for staging.
+        # Composer will not install them unless a project asks for that exact version.
+        PRERELEASE_FLAG=""
+        case "${{ github.ref_name }}" in
+          *-*) PRERELEASE_FLAG="--prerelease" ;;
+        esac
+
         gh release create ${{ github.ref_name }} \
           --title "Release ${{ github.ref_name }}" \
           --draft \
+          $PRERELEASE_FLAG \
           --notes "## Release ${{ github.ref_name }}
-          
-          This release has passed all tests across PHP 7.4-8.3 and Laravel 6-11, including comprehensive architecture validation.
+
+          This release has passed all tests across PHP 7.4-8.5 and Laravel 6-13, including mapping snapshot tests and architecture validation.
           
           ### Features:
           - ✅ Single ResponseBuilder architecture (v${{ github.ref_name }})
@@ -191,7 +198,10 @@ jobs:
     runs-on: ubuntu-latest
     name: Publish Release
     needs: create-draft-release
-    
+    # Stable releases wait for approval on the "production" environment.
+    # Pre-releases (tags containing "-") publish straight away for staging.
+    environment: ${{ contains(github.ref_name, '-') && 'pre-release' || 'production' }}
+
     permissions:
       contents: write
 
@@ -219,19 +229,22 @@ jobs:
       uses: actions/checkout@v4
 
     - name: Update Packagist
+      env:
+        PACKAGIST_USERNAME: ${{ secrets.PACKAGIST_USERNAME }}
+        PACKAGIST_TOKEN: ${{ secrets.PACKAGIST_TOKEN }}
       run: |
         echo "Updating Packagist..."
-        echo "Username: ${{ secrets.PACKAGIST_USERNAME }}"
-        echo "Token: ${{ secrets.PACKAGIST_TOKEN }}"
-        
-        if [ -z "${{ secrets.PACKAGIST_USERNAME }}" ] || [ -z "${{ secrets.PACKAGIST_TOKEN }}" ]; then
+
+        if [ -z "$PACKAGIST_USERNAME" ] || [ -z "$PACKAGIST_TOKEN" ]; then
           echo "❌ PACKAGIST_USERNAME or PACKAGIST_TOKEN secrets are not set!"
           echo "Please add these secrets in GitHub repository settings."
           exit 1
         fi
-        
-        curl -X POST "https://packagist.org/api/update-package?username=${{ secrets.PACKAGIST_USERNAME }}&apiToken=${{ secrets.PACKAGIST_TOKEN }}" \
-          -d "repository[url]=https://github.com/Ekatra-Global-Corp/ekatra-php-sdk.git" \
-          -H "Content-Type: application/x-www-form-urlencoded"
-        
+
+        # Credentials go in a header, never in the URL or the log
+        curl --fail --silent --show-error -X POST "https://packagist.org/api/update-package" \
+          -H "Authorization: Bearer ${PACKAGIST_USERNAME}:${PACKAGIST_TOKEN}" \
+          -H "Content-Type: application/json" \
+          -d '{"repository":{"url":"https://github.com/Ekatra-Global-Corp/ekatra-php-sdk"}}'
+
         echo "✅ Packagist update request sent successfully!"

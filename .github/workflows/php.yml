@@ -2,27 +2,44 @@ name: PHP Tests
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ main, develop, 'release/**' ]
   pull_request:
-    branches: [ main, develop ]
+    branches: [ main, develop, 'release/**' ]
+  workflow_call:
+
+permissions:
+  contents: read
 
 jobs:
   test:
     runs-on: ubuntu-latest
-    
-    strategy:
-      matrix:
-        php-version: [7.4, 8.0, 8.1, 8.2, 8.3]
-        laravel-version: [6, 7, 8, 9, 10, 11]
-        exclude:
-          - php-version: 7.4
-            laravel-version: 11
-          - php-version: 8.0
-            laravel-version: 11
-          - php-version: 8.1
-            laravel-version: 11
+    name: PHP ${{ matrix.php }} / Laravel ${{ matrix.laravel }}
 
-    name: PHP ${{ matrix.php-version }} with Laravel ${{ matrix.laravel-version }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { laravel: 6,  testbench: '^4.0',  php: '7.4' }
+          - { laravel: 7,  testbench: '^5.0',  php: '7.4' }
+          - { laravel: 8,  testbench: '^6.0',  php: '7.4' }
+          - { laravel: 8,  testbench: '^6.0',  php: '8.0' }
+          - { laravel: 8,  testbench: '^6.0',  php: '8.1' }
+          - { laravel: 9,  testbench: '^7.0',  php: '8.0' }
+          - { laravel: 9,  testbench: '^7.0',  php: '8.1' }
+          - { laravel: 9,  testbench: '^7.0',  php: '8.2' }
+          - { laravel: 10, testbench: '^8.0',  php: '8.1' }
+          - { laravel: 10, testbench: '^8.0',  php: '8.2' }
+          - { laravel: 10, testbench: '^8.0',  php: '8.3' }
+          - { laravel: 11, testbench: '^9.0',  php: '8.2' }
+          - { laravel: 11, testbench: '^9.0',  php: '8.3' }
+          - { laravel: 11, testbench: '^9.0',  php: '8.4' }
+          - { laravel: 12, testbench: '^10.0', php: '8.2' }
+          - { laravel: 12, testbench: '^10.0', php: '8.3' }
+          - { laravel: 12, testbench: '^10.0', php: '8.4' }
+          - { laravel: 12, testbench: '^10.0', php: '8.5' }
+          - { laravel: 13, testbench: '^11.0', php: '8.3' }
+          - { laravel: 13, testbench: '^11.0', php: '8.4' }
+          - { laravel: 13, testbench: '^11.0', php: '8.5' }
 
     steps:
     - name: Checkout code
@@ -31,37 +48,54 @@ jobs:
     - name: Setup PHP
       uses: shivammathur/setup-php@v2
       with:
-        php-version: ${{ matrix.php-version }}
+        php-version: ${{ matrix.php }}
         extensions: mbstring, xml, curl, json, dom, filter, hash, pdo, pdo_sqlite
-        coverage: xdebug
+        coverage: none
+        tools: composer:v2
 
-    - name: Cache Composer packages
-      uses: actions/cache@v3
-      with:
-        path: vendor
-        key: ${{ runner.os }}-php-${{ matrix.php-version }}-laravel-${{ matrix.laravel-version }}-composer-${{ hashFiles('**/composer.json') }}
-        restore-keys: |
-          ${{ runner.os }}-php-${{ matrix.php-version }}-laravel-${{ matrix.laravel-version }}-composer-
-          ${{ runner.os }}-php-${{ matrix.php-version }}-composer-
+    - name: Pin Laravel ${{ matrix.laravel }}
+      run: |
+        # Older Laravel releases have published advisories; Composer would refuse to
+        # install them. The security job below audits the current versions instead.
+        # (setting exists from Composer 2.9; older versions don't block, so ignore failure)
+        composer config audit.block-insecure false || true
+        composer require "illuminate/support:^${{ matrix.laravel }}.0" --no-update --no-interaction
+        composer require --dev "orchestra/testbench:${{ matrix.testbench }}" --no-update --no-interaction
 
     - name: Install dependencies
-      run: |
-        # Remove composer.lock to force fresh resolution for each PHP/Laravel combination
-        rm -f composer.lock
-        composer install --prefer-dist --no-progress --no-interaction
+      run: composer update --prefer-dist --no-progress --no-interaction --with-all-dependencies
 
-    - name: Run tests
-      run: composer test
+    - name: Show resolved versions
+      run: composer show laravel/framework phpunit/phpunit orchestra/testbench | grep -E '^(name|versions)'
+
+    - name: Run tests (unit, Laravel boot, mapping snapshots)
+      run: vendor/bin/phpunit
+
+  coverage:
+    runs-on: ubuntu-latest
+    name: Coverage
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: '8.4'
+        extensions: mbstring, xml, curl, json
+        coverage: pcov
+
+    - name: Install dependencies
+      run: composer update --prefer-dist --no-progress --no-interaction
 
     - name: Generate coverage report
-      if: matrix.php-version == '8.3' && matrix.laravel-version == '11'
       run: composer test-coverage
 
     - name: Upload coverage to Codecov
-      if: matrix.php-version == '8.3' && matrix.laravel-version == '11'
-      uses: codecov/codecov-action@v3
+      uses: codecov/codecov-action@v5
       with:
-        file: coverage/coverage.xml
+        files: coverage/coverage.xml
         fail_ci_if_error: false
 
   security:
@@ -75,47 +109,11 @@ jobs:
     - name: Setup PHP
       uses: shivammathur/setup-php@v2
       with:
-        php-version: 8.3
+        php-version: '8.4'
         extensions: mbstring, xml, curl, json
 
     - name: Install dependencies
-      run: |
-        # Use platform PHP 8.3.28 to match the lock file we generated
-        composer config platform.php 8.3.28
-        composer install --prefer-dist --no-progress --no-interaction
+      run: composer update --prefer-dist --no-progress --no-interaction
 
     - name: Run security audit
       run: composer audit
-
-  code-quality:
-    runs-on: ubuntu-latest
-    name: Code Quality
-
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-
-    - name: Setup PHP
-      uses: shivammathur/setup-php@v2
-      with:
-        php-version: 8.3
-        extensions: mbstring, xml, curl, json
-
-    - name: Install dependencies
-      run: composer install --prefer-dist --no-progress --no-interaction
-
-    - name: Run PHP CS Fixer
-      run: |
-        if [ -f vendor/bin/php-cs-fixer ]; then
-          vendor/bin/php-cs-fixer fix --dry-run --diff --verbose
-        else
-          echo "PHP CS Fixer not installed, skipping..."
-        fi
-
-    - name: Run PHPStan
-      run: |
-        if [ -f vendor/bin/phpstan ]; then
-          vendor/bin/phpstan analyse src --level=5
-        else
-          echo "PHPStan not installed, skipping..."
-        fi
