@@ -1,0 +1,186 @@
+{
+    "product_id": 67890,
+    "name": "Organic Cotton T-Shirt",
+    "slug": "organic-cotton-t-shirt",
+    "description": "Comfortable organic cotton t-shirt made from sustainable materials. Perfect for everyday wear.",
+    "short_description": "Soft organic cotton t-shirt",
+    "sku": "OCT-001",
+    "price": "24.99",
+    "regular_price": "29.99",
+    "sale_price": "24.99",
+    "date_on_sale_from": null,
+    "date_on_sale_to": null,
+    "on_sale": true,
+    "status": "publish",
+    "featured": false,
+    "catalog_visibility": "visible",
+    "date_created": "2024-01-10T08:00:00",
+    "date_modified": "2024-01-15T12:30:00",
+    "stock_status": "instock",
+    "stock_quantity": 100,
+    "backorders": "no",
+    "sold_individually": false,
+    "weight": "0.2",
+    "dimensions": {
+        "length": "30",
+        "width": "20",
+        "height": "2"
+    },
+    "shipping_class": "standard",
+    "shipping_class_id": 0,
+    "reviews_allowed": true,
+    "average_rating": "4.5",
+    "rating_count": 23,
+    "related_ids": [
+        67891,
+        67892
+    ],
+    "upsell_ids": [],
+    "cross_sell_ids": [],
+    "parent_id": 0,
+    "purchase_note": "",
+    "categories": [
+        {
+            "id": 15,
+            "name": "Clothing",
+            "slug": "clothing"
+        },
+        {
+            "id": 18,
+            "name": "T-Shirts",
+            "slug": "t-shirts"
+        }
+    ],
+    "tags": [
+        {
+            "id": 25,
+            "name": "organic",
+            "slug": "organic"
+        },
+        {
+            "id": 26,
+            "name": "cotton",
+            "slug": "cotton"
+        },
+        {
+            "id": 27,
+            "name": "sustainable",
+            "slug": "sustainable"
+        }
+    ],
+    "images": [
+        {
+            "id": 12345,
+            "src": "https://example.com/images/tshirt-front.jpg",
+            "name": "tshirt-front.jpg",
+            "alt": "Organic Cotton T-Shirt Front View"
+        },
+        {
+            "id": 12346,
+            "src": "https://example.com/images/tshirt-back.jpg",
+            "name": "tshirt-back.jpg",
+            "alt": "Organic Cotton T-Shirt Back View"
+        }
+    ],
+    "attributes": [
+        {
+            "id": 1,
+            "name": "Color",
+            "position": 0,
+            "visible": true,
+            "variation": true,
+            "options": [
+                "White",
+                "Black",
+                "Blue"
+            ]
+        },
+        {
+            "id": 2,
+            "name": "Size",
+            "position": 1,
+            "visible": true,
+            "variation": true,
+            "options": [
+                "S",
+                "M",
+                "L",
+                "XL"
+            ]
+        }
+    ],
+    "default_attributes": [],
+    "menu_order": 0,
+    "meta_data": [
+        {
+            "id": 1001,
+            "key": "_wc_rating_count",
+            "value": "23"
+        },
+        {
+            "id": 1002,
+            "key": "_wc_average_rating",
+            "value": "4.5"
+        }
+    ],
+    "variations": [
+        {
+            "id": 67891,
+            "date_created": "2024-01-10T08:00:00",
+            "date_modified": "2024-01-15T12:30:00",
+            "status": "publish",
+            "featured": false,
+            "description": "",
+            "sku": "OCT-001-WH-M",
+            "price": "24.99",
+            "regular_price": "29.99",
+            "sale_price": "24.99",
+            "date_on_sale_from": null,
+            "date_on_sale_to": null,
+            "on_sale": true,
+            "purchasable": true,
+            "virtual": false,
+            "downloadable": false,
+            "downloads": [],
+            "download_limit": -1,
+            "download_expiry": -1,
+            "tax_status": "taxable",
+            "tax_class": "",
+            "manage_stock": true,
+            "stock_quantity": 25,
+            "stock_status": "instock",
+            "backorders": "no",
+            "backorders_allowed": false,
+            "backordered": false,
+            "sold_individually": false,
+            "weight": "0.2",
+            "dimensions": {
+                "length": "30",
+                "width": "20",
+                "height": "2"
+            },
+            "shipping_class": "standard",
+            "shipping_class_id": 0,
+            "image": {
+                "id": 12345,
+                "src": "https://example.com/images/tshirt-white-medium.jpg",
+                "name": "tshirt-white-medium.jpg",
+                "alt": "Organic Cotton T-Shirt White Medium"
+            },
+            "attributes": [
+                {
+                    "id": 1,
+                    "name": "Color",
+                    "option": "White"
+                },
+                {
+                    "id": 2,
+                    "name": "Size",
+                    "option": "M"
+                }
+            ],
+            "menu_order": 1,
+            "meta_data": []
+        }
+    ]
+}

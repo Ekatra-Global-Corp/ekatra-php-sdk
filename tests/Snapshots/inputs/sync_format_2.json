@@ -1,0 +1,6 @@
+{
+    "product_id": "123",
+    "title": "Test Product",
+    "currency": "USD",
+    "image_urls": "https://example.com/image1.jpg,https://example.com/image2.jpg"
+}

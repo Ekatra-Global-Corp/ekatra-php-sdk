@@ -1,0 +1,200 @@
+{
+    "transformProduct": {
+        "exception": "TypeError",
+        "message": "Cannot assign string to property Ekatra\\Product\\Core\\EkatraProduct::$tags of type array"
+    },
+    "transformVariant": {
+        "status": "error",
+        "data": null,
+        "metadata": {
+            "sdkVersion": "{sdkVersion}",
+            "validation": {
+                "valid": false,
+                "errors": [
+                    "MRP must be > 0",
+                    "Selling price must be > 0",
+                    "At least one image is required"
+                ]
+            },
+            "canAutoTransform": false,
+            "manualSetupRequired": true,
+            "maxQuantity": null
+        },
+        "message": "Variant validation failed"
+    },
+    "smartTransformProduct": {
+        "status": "success",
+        "data": {
+            "productId": "123",
+            "title": "Test Product",
+            "description": "Test Description",
+            "currency": "USD",
+            "existingProductUrl": "https://example.com",
+            "searchKeywords": [
+                "test",
+                "product"
+            ],
+            "variants": [
+                {
+                    "id": "{generated-id-1}",
+                    "color": "unknown",
+                    "variations": [
+                        {
+                            "sizeId": "{generated-id-2}",
+                            "mrp": 100.0,
+                            "sellingPrice": 80.0,
+                            "discount": 25.0,
+                            "discountLabel": "Special Offer",
+                            "availability": false,
+                            "quantity": 0,
+                            "size": "freestyle",
+                            "variantId": "{generated-id-1}"
+                        }
+                    ],
+                    "mediaList": [],
+                    "weight": 0,
+                    "thumbnail": null
+                }
+            ],
+            "sizes": [
+                {
+                    "_id": "{generated-id-2}",
+                    "name": "freestyle"
+                }
+            ]
+        },
+        "metadata": {
+            "sdkVersion": "{sdkVersion}",
+            "validation": {
+                "valid": true,
+                "errors": [],
+                "suggestions": [],
+                "fixInstructions": [],
+                "canAutoTransform": true,
+                "manualSetupRequired": false,
+                "dataType": "SIMPLE_SINGLE_VARIANT"
+            },
+            "dataType": "SIMPLE_SINGLE_VARIANT",
+            "autoTransformed": true,
+            "canAutoTransform": true,
+            "manualSetupRequired": false
+        },
+        "message": "Product details retrieved successfully"
+    },
+    "smartTransformProductFlexible": {
+        "status": "success",
+        "data": {
+            "productId": "123",
+            "title": "Test Product",
+            "description": "Test Description",
+            "currency": "USD",
+            "existingProductUrl": "https://example.com",
+            "keywords": "test,product",
+            "variants": [
+                {
+                    "id": "{generated-id-1}",
+                    "color": "unknown",
+                    "variations": [
+                        {
+                            "sizeId": "{generated-id-2}",
+                            "mrp": 100.0,
+                            "sellingPrice": 80.0,
+                            "discount": 25.0,
+                            "discountLabel": "Special Offer",
+                            "availability": false,
+                            "quantity": 0,
+                            "size": "freestyle",
+                            "variantId": "{generated-id-1}"
+                        }
+                    ],
+                    "weight": 0,
+                    "thumbnail": "",
+                    "mediaList": []
+                }
+            ],
+            "sizes": [
+                {
+                    "id": "{generated-id-2}",
+                    "name": "freestyle"
+                }
+            ],
+            "offers": [],
+            "handle": "test-product",
+            "countryCode": null
+        },
+        "metadata": {
+            "sdkVersion": "{sdkVersion}",
+            "validation": {
+                "valid": true,
+                "errors": [],
+                "suggestions": [],
+                "canAutoTransform": true,
+                "manualSetupRequired": false
+            },
+            "dataType": "SIMPLE_SINGLE_VARIANT",
+            "canAutoTransform": true,
+            "manualSetupRequired": false,
+            "maxQuantity": null
+        },
+        "message": "Product details retrieved successfully"
+    },
+    "syncProduct": {
+        "status": "error",
+        "data": null,
+        "metadata": {
+            "sdkVersion": "{sdkVersion}",
+            "validation": {
+                "valid": false,
+                "errors": [
+                    "❌ Image URL is required"
+                ],
+                "suggestions": [
+                    "💡 Add one of these fields: imageUrl, image_url, image_urls, thumbnailUrl, thumbnail_url..."
+                ],
+                "canAutoTransform": false,
+                "manualSetupRequired": true
+            },
+            "canAutoTransform": false,
+            "manualSetupRequired": true,
+            "maxQuantity": null
+        },
+        "message": "Product sync transformation failed"
+    },
+    "syncProductData": {
+        "exception": "Ekatra\\Product\\Exceptions\\EkatraValidationException",
+        "message": "❌ Image URL is required"
+    },
+    "syncProductsBatch": {
+        "successful": [],
+        "failed": [
+            {
+                "index": 0,
+                "input": {
+                    "product_id": "123",
+                    "title": "Test Product",
+                    "description": "Test Description",
+                    "currency": "USD",
+                    "existing_url": "https://example.com",
+                    "keywords": "test,product",
+                    "variant_name": "test",
+                    "variant_mrp": "100.00",
+                    "variant_selling_price": "80.00",
+                    "discount": 25,
+                    "discountLabel": "Special Offer"
+                },
+                "error": "❌ Image URL is required",
+                "validation": {
+                    "errors": [
+                        "❌ Image URL is required"
+                    ],
+                    "code": 422
+                }
+            }
+        ],
+        "summary": {
+            "total": 1,
+            "successful": 0,
+            "failed": 1
+        }
+    }
+}

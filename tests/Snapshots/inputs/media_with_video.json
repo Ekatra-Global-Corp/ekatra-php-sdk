@@ -1,0 +1,11 @@
+{
+    "productId": "30003",
+    "title": "Silver Anklet",
+    "currency": "USD",
+    "images": ["https://cdn.example.com/a1.jpg", "https://cdn.example.com/a2.gif"],
+    "videoUrls": ["https://cdn.example.com/a1.mp4", "https://cdn.example.com/a2.webm"],
+    "variants": [
+        {"id": "V1", "name": "Small", "size": "S", "color": "Silver", "price": 49.5, "originalPrice": 60, "stock": 4, "images": ["https://cdn.example.com/s.jpg"]},
+        {"id": "V2", "name": "Large", "size": "L", "color": "Silver", "price": 55, "originalPrice": 60, "stock": 0, "images": ["https://cdn.example.com/l.jpg"]}
+    ]
+}

@@ -1,0 +1,264 @@
+{
+    "transformProduct": {
+        "status": "error",
+        "data": null,
+        "metadata": {
+            "sdkVersion": "{sdkVersion}",
+            "validation": {
+                "valid": false,
+                "errors": [
+                    "Variant 0: Variant name is required, Selling price must be > 0, At least one image is required",
+                    "Size at index 0 must have 'id' and 'name' fields",
+                    "Size at index 1 must have 'id' and 'name' fields",
+                    "Size at index 2 must have 'id' and 'name' fields"
+                ]
+            },
+            "canAutoTransform": false,
+            "manualSetupRequired": true,
+            "maxQuantity": null
+        },
+        "message": "Product validation failed"
+    },
+    "transformVariant": {
+        "status": "error",
+        "data": null,
+        "metadata": {
+            "sdkVersion": "{sdkVersion}",
+            "validation": {
+                "valid": false,
+                "errors": [
+                    "MRP must be > 0",
+                    "Selling price must be > 0",
+                    "At least one image is required",
+                    "Variation at index 0 must have 'sizeId' field",
+                    "Variation at index 0 MRP must be > 0",
+                    "Variation at index 0 selling price must be > 0",
+                    "Variation at index 1 must have 'sizeId' field",
+                    "Variation at index 1 MRP must be > 0",
+                    "Variation at index 1 selling price must be > 0",
+                    "Variation at index 2 must have 'sizeId' field",
+                    "Variation at index 2 MRP must be > 0",
+                    "Variation at index 2 selling price must be > 0",
+                    "Variation at index 0 must have sizeId",
+                    "Variation at index 0 must have valid MRP",
+                    "Variation at index 0 must have valid selling price",
+                    "Variation at index 1 must have sizeId",
+                    "Variation at index 1 must have valid MRP",
+                    "Variation at index 1 must have valid selling price",
+                    "Variation at index 2 must have sizeId",
+                    "Variation at index 2 must have valid MRP",
+                    "Variation at index 2 must have valid selling price"
+                ]
+            },
+            "canAutoTransform": false,
+            "manualSetupRequired": true,
+            "maxQuantity": null
+        },
+        "message": "Variant validation failed"
+    },
+    "smartTransformProduct": {
+        "status": "success",
+        "data": {
+            "productId": 20051,
+            "title": "T-Shirt",
+            "description": "Comfortable cotton t-shirt",
+            "currency": "USD",
+            "existingProductUrl": "https://shop.com/tshirt",
+            "searchKeywords": [
+                "clothing",
+                "t-shirt"
+            ],
+            "variants": [
+                {
+                    "variant_id": "variant-1",
+                    "color": "Red",
+                    "size": "M",
+                    "mrp": 25,
+                    "selling_price": 20,
+                    "quantity": 10,
+                    "variations": [
+                        {
+                            "sizeId": "size-m",
+                            "mrp": 25.0,
+                            "sellingPrice": 20.0,
+                            "availability": true,
+                            "quantity": 10,
+                            "size": "M",
+                            "variantId": "variant-1",
+                            "discount": 20.0
+                        }
+                    ]
+                }
+            ],
+            "sizes": [
+                {
+                    "_id": "size-s",
+                    "name": "S"
+                },
+                {
+                    "_id": "size-m",
+                    "name": "M"
+                },
+                {
+                    "_id": "size-l",
+                    "name": "L"
+                }
+            ]
+        },
+        "metadata": {
+            "sdkVersion": "{sdkVersion}",
+            "validation": {
+                "valid": true,
+                "errors": [],
+                "suggestions": [],
+                "fixInstructions": [],
+                "canAutoTransform": true,
+                "manualSetupRequired": false,
+                "dataType": "MIXED_STRUCTURE"
+            },
+            "dataType": "MIXED_STRUCTURE",
+            "autoTransformed": false,
+            "canAutoTransform": true,
+            "manualSetupRequired": false
+        },
+        "message": "Product details retrieved successfully"
+    },
+    "smartTransformProductFlexible": {
+        "status": "success",
+        "data": {
+            "productId": "20051",
+            "title": "T-Shirt",
+            "description": "Comfortable cotton t-shirt",
+            "currency": "USD",
+            "existingProductUrl": "https://shop.com/tshirt",
+            "keywords": "",
+            "variants": [
+                {
+                    "id": "{generated-id-1}",
+                    "color": "Red",
+                    "variations": [
+                        {
+                            "sizeId": "{generated-id-2}",
+                            "mrp": 25.0,
+                            "sellingPrice": 20.0,
+                            "discount": 20.0,
+                            "discountLabel": null,
+                            "availability": true,
+                            "quantity": 10,
+                            "size": "M",
+                            "variantId": "{generated-id-1}"
+                        }
+                    ],
+                    "weight": 0,
+                    "thumbnail": "",
+                    "mediaList": []
+                }
+            ],
+            "sizes": [
+                {
+                    "id": "{generated-id-2}",
+                    "name": "M"
+                }
+            ],
+            "offers": [],
+            "handle": "t-shirt",
+            "countryCode": null
+        },
+        "metadata": {
+            "sdkVersion": "{sdkVersion}",
+            "validation": {
+                "valid": true,
+                "errors": [],
+                "suggestions": [],
+                "canAutoTransform": true,
+                "manualSetupRequired": false
+            },
+            "dataType": "COMPLEX_STRUCTURE",
+            "canAutoTransform": true,
+            "manualSetupRequired": false,
+            "maxQuantity": null
+        },
+        "message": "Product details retrieved successfully"
+    },
+    "syncProduct": {
+        "status": "error",
+        "data": null,
+        "metadata": {
+            "sdkVersion": "{sdkVersion}",
+            "validation": {
+                "valid": false,
+                "errors": [
+                    "❌ Image URL is required"
+                ],
+                "suggestions": [
+                    "💡 Add one of these fields: imageUrl, image_url, image_urls, thumbnailUrl, thumbnail_url..."
+                ],
+                "canAutoTransform": false,
+                "manualSetupRequired": true
+            },
+            "canAutoTransform": false,
+            "manualSetupRequired": true,
+            "maxQuantity": null
+        },
+        "message": "Product sync transformation failed"
+    },
+    "syncProductData": {
+        "exception": "Ekatra\\Product\\Exceptions\\EkatraValidationException",
+        "message": "❌ Image URL is required"
+    },
+    "syncProductsBatch": {
+        "successful": [],
+        "failed": [
+            {
+                "index": 0,
+                "input": {
+                    "product_id": 20051,
+                    "title": "T-Shirt",
+                    "description": "Comfortable cotton t-shirt",
+                    "currency": "USD",
+                    "existing_url": "https://shop.com/tshirt",
+                    "keywords": [
+                        "clothing",
+                        "t-shirt"
+                    ],
+                    "sizes": [
+                        {
+                            "_id": "size-s",
+                            "name": "S"
+                        },
+                        {
+                            "_id": "size-m",
+                            "name": "M"
+                        },
+                        {
+                            "_id": "size-l",
+                            "name": "L"
+                        }
+                    ],
+                    "variants": [
+                        {
+                            "variant_id": "variant-1",
+                            "color": "Red",
+                            "size": "M",
+                            "mrp": 25,
+                            "selling_price": 20,
+                            "quantity": 10
+                        }
+                    ]
+                },
+                "error": "❌ Image URL is required",
+                "validation": {
+                    "errors": [
+                        "❌ Image URL is required"
+                    ],
+                    "code": 422
+                }
+            }
+        ],
+        "summary": {
+            "total": 1,
+            "successful": 0,
+            "failed": 1
+        }
+    }
+}

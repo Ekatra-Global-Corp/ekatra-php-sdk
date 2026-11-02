@@ -10,10 +10,8 @@
         <testsuite name="Integration">
             <directory>tests/Integration</directory>
         </testsuite>
+        <testsuite name="Snapshots">
+            <directory>tests/Snapshots</directory>
+        </testsuite>
     </testsuites>
-    <coverage>
-        <include>
-            <directory suffix=".php">src</directory>
-        </include>
-    </coverage>
 </phpunit>

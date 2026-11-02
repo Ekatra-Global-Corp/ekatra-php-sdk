@@ -1,0 +1,78 @@
+{
+    "product_id": 55555,
+    "name": "Gaming Laptop",
+    "description": "High-performance gaming laptop with RTX graphics",
+    "currency": "USD",
+    "existing_url": "https://store.example.com/gaming-laptop",
+    "keywords": "gaming,laptop,rtx,performance",
+    "countryCode": "US",
+    "variants": [
+        {
+            "variant_id": "LAP-001-BLK-16GB",
+            "name": "Gaming Laptop - Black - 16GB RAM",
+            "color": "Black",
+            "size": "16GB RAM",
+            "mrp": 1999.99,
+            "selling_price": 1799.99,
+            "quantity": 10,
+            "weight": 2.5,
+            "images": [
+                "https://store.example.com/images/laptop-black-1.jpg",
+                "https://store.example.com/images/laptop-black-2.jpg"
+            ],
+            "specifications": {
+                "CPU": "Intel i7-12700H",
+                "GPU": "RTX 4070",
+                "RAM": "16GB DDR5",
+                "Storage": "1TB NVMe SSD"
+            }
+        },
+        {
+            "variant_id": "LAP-001-SLV-32GB",
+            "name": "Gaming Laptop - Silver - 32GB RAM",
+            "color": "Silver",
+            "size": "32GB RAM",
+            "mrp": 2299.99,
+            "selling_price": 2099.99,
+            "quantity": 5,
+            "weight": 2.5,
+            "images": [
+                "https://store.example.com/images/laptop-silver-1.jpg",
+                "https://store.example.com/images/laptop-silver-2.jpg"
+            ],
+            "specifications": {
+                "CPU": "Intel i7-12700H",
+                "GPU": "RTX 4070",
+                "RAM": "32GB DDR5",
+                "Storage": "2TB NVMe SSD"
+            }
+        }
+    ],
+    "offers": [
+        {
+            "title": "Gaming Bundle Offer",
+            "productOfferDetails": [
+                {
+                    "title": "Free Gaming Mouse",
+                    "description": "Get a premium gaming mouse worth $99 with this laptop"
+                },
+                {
+                    "title": "Extended Warranty",
+                    "description": "3-year extended warranty included"
+                }
+            ]
+        }
+    ],
+    "categories": [
+        "Electronics",
+        "Computers",
+        "Gaming"
+    ],
+    "tags": [
+        "gaming",
+        "laptop",
+        "rtx",
+        "performance",
+        "gaming-laptop"
+    ]
+}

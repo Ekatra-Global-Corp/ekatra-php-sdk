@@ -1,0 +1,393 @@
+{
+    "transformProduct": {
+        "status": "error",
+        "data": null,
+        "metadata": {
+            "sdkVersion": "{sdkVersion}",
+            "validation": {
+                "valid": false,
+                "errors": [
+                    "Existing URL is required",
+                    "Currency must be one of: INR, USD, EUR, GBP",
+                    "Variant 0: Variant name is required, MRP must be > 0, Selling price cannot be greater than MRP, At least one image is required"
+                ]
+            },
+            "canAutoTransform": false,
+            "manualSetupRequired": true,
+            "maxQuantity": null
+        },
+        "message": "Product validation failed"
+    },
+    "transformVariant": {
+        "status": "error",
+        "data": null,
+        "metadata": {
+            "sdkVersion": "{sdkVersion}",
+            "validation": {
+                "valid": false,
+                "errors": [
+                    "MRP must be > 0",
+                    "Selling price cannot be greater than MRP",
+                    "Variation at index 0 MRP must be > 0",
+                    "Image URL at index 0 is not valid",
+                    "Image URL at index 1 is not valid",
+                    "Variation at index 0 must have valid MRP"
+                ]
+            },
+            "canAutoTransform": false,
+            "manualSetupRequired": true,
+            "maxQuantity": null
+        },
+        "message": "Variant validation failed"
+    },
+    "smartTransformProduct": {
+        "status": "error",
+        "data": null,
+        "metadata": {
+            "sdkVersion": "{sdkVersion}",
+            "validation": {
+                "valid": false,
+                "errors": [
+                    "❌ Product title is required",
+                    "❌ Currency is required",
+                    "❌ Existing URL is required",
+                    "❌ No variant data found",
+                    "❌ At least one keyword is required"
+                ],
+                "suggestions": [
+                    "💡 Add 'title' field to your data",
+                    "💡 Add 'currency' field to your data",
+                    "💡 Add 'existing_url' field to your data",
+                    "💡 Add variant data using one of these methods:",
+                    "   Method 1: Add 'variant_name', 'variant_mrp', 'variant_selling_price' fields",
+                    "   Method 2: Add 'variants' array with variant objects",
+                    "💡 Add 'keywords' field to your data"
+                ],
+                "fixInstructions": [
+                    "🔧 Fix: Add 'title' => 'Your Product Title' to your data array",
+                    "🔧 Fix: Add 'currency' => 'INR' (or USD, EUR, GBP) to your data array",
+                    "🔧 Fix: Add 'existing_url' => 'https://your-site.com/product' to your data array",
+                    "🔧 Fix: Add variant data or use manual setup with $product->addVariant()",
+                    "🔧 Fix: Add 'keywords' => ['keyword1', 'keyword2'] to your data array"
+                ],
+                "canAutoTransform": false,
+                "manualSetupRequired": true,
+                "dataType": "MIXED_STRUCTURE"
+            },
+            "canAutoTransform": false,
+            "manualSetupRequired": true,
+            "maxQuantity": null
+        },
+        "message": "Product validation failed"
+    },
+    "smartTransformProductFlexible": {
+        "status": "success",
+        "data": {
+            "productId": "67890",
+            "title": "Organic Cotton T-Shirt",
+            "description": "Comfortable organic cotton t-shirt made from sustainable materials. Perfect for everyday wear.",
+            "currency": "USD",
+            "existingProductUrl": "https://example.com/product",
+            "keywords": "organic,cotton,sustainable",
+            "variants": [
+                {
+                    "id": "{generated-id-1}",
+                    "color": "unknown",
+                    "variations": [
+                        {
+                            "sizeId": "{generated-id-2}",
+                            "mrp": 29.99,
+                            "sellingPrice": 24.99,
+                            "discount": 16.67,
+                            "discountLabel": null,
+                            "availability": true,
+                            "quantity": 100,
+                            "size": "freestyle",
+                            "variantId": "{generated-id-1}"
+                        }
+                    ],
+                    "weight": 0,
+                    "thumbnail": "https://example.com/images/tshirt-front.jpg",
+                    "mediaList": [
+                        {
+                            "mediaType": "IMAGE",
+                            "playUrl": "https://example.com/images/tshirt-front.jpg",
+                            "thumbnailUrl": "https://example.com/images/tshirt-front.jpg",
+                            "mimeType": "image/jpeg",
+                            "playerTypeEnum": "IMAGE",
+                            "weight": 0,
+                            "duration": 0,
+                            "size": 0
+                        },
+                        {
+                            "mediaType": "IMAGE",
+                            "playUrl": "https://example.com/images/tshirt-back.jpg",
+                            "thumbnailUrl": "https://example.com/images/tshirt-back.jpg",
+                            "mimeType": "image/jpeg",
+                            "playerTypeEnum": "IMAGE",
+                            "weight": 0,
+                            "duration": 0,
+                            "size": 0
+                        }
+                    ]
+                }
+            ],
+            "sizes": [
+                {
+                    "id": "{generated-id-2}",
+                    "name": "freestyle"
+                }
+            ],
+            "offers": [],
+            "handle": "organic-cotton-t-shirt",
+            "countryCode": null
+        },
+        "metadata": {
+            "sdkVersion": "{sdkVersion}",
+            "validation": {
+                "valid": true,
+                "errors": [],
+                "suggestions": [],
+                "canAutoTransform": true,
+                "manualSetupRequired": false
+            },
+            "dataType": "MIXED_STRUCTURE",
+            "canAutoTransform": true,
+            "manualSetupRequired": false,
+            "maxQuantity": null
+        },
+        "message": "Product details retrieved successfully"
+    },
+    "syncProduct": {
+        "status": "error",
+        "data": null,
+        "metadata": {
+            "sdkVersion": "{sdkVersion}",
+            "validation": {
+                "valid": false,
+                "errors": [
+                    "❌ Currency is required"
+                ],
+                "suggestions": [
+                    "💡 Add one of these fields: currency, currency_code, currencyCode, currencyCode, curr..."
+                ],
+                "canAutoTransform": false,
+                "manualSetupRequired": true
+            },
+            "canAutoTransform": false,
+            "manualSetupRequired": true,
+            "maxQuantity": null
+        },
+        "message": "Product sync transformation failed"
+    },
+    "syncProductData": {
+        "exception": "Ekatra\\Product\\Exceptions\\EkatraValidationException",
+        "message": "❌ Currency is required"
+    },
+    "syncProductsBatch": {
+        "successful": [],
+        "failed": [
+            {
+                "index": 0,
+                "input": {
+                    "product_id": 67890,
+                    "name": "Organic Cotton T-Shirt",
+                    "slug": "organic-cotton-t-shirt",
+                    "description": "Comfortable organic cotton t-shirt made from sustainable materials. Perfect for everyday wear.",
+                    "short_description": "Soft organic cotton t-shirt",
+                    "sku": "OCT-001",
+                    "price": "24.99",
+                    "regular_price": "29.99",
+                    "sale_price": "24.99",
+                    "date_on_sale_from": null,
+                    "date_on_sale_to": null,
+                    "on_sale": true,
+                    "status": "publish",
+                    "featured": false,
+                    "catalog_visibility": "visible",
+                    "date_created": "2024-01-10T08:00:00",
+                    "date_modified": "2024-01-15T12:30:00",
+                    "stock_status": "instock",
+                    "stock_quantity": 100,
+                    "backorders": "no",
+                    "sold_individually": false,
+                    "weight": "0.2",
+                    "dimensions": {
+                        "length": "30",
+                        "width": "20",
+                        "height": "2"
+                    },
+                    "shipping_class": "standard",
+                    "shipping_class_id": 0,
+                    "reviews_allowed": true,
+                    "average_rating": "4.5",
+                    "rating_count": 23,
+                    "related_ids": [
+                        67891,
+                        67892
+                    ],
+                    "upsell_ids": [],
+                    "cross_sell_ids": [],
+                    "parent_id": 0,
+                    "purchase_note": "",
+                    "categories": [
+                        {
+                            "id": 15,
+                            "name": "Clothing",
+                            "slug": "clothing"
+                        },
+                        {
+                            "id": 18,
+                            "name": "T-Shirts",
+                            "slug": "t-shirts"
+                        }
+                    ],
+                    "tags": [
+                        {
+                            "id": 25,
+                            "name": "organic",
+                            "slug": "organic"
+                        },
+                        {
+                            "id": 26,
+                            "name": "cotton",
+                            "slug": "cotton"
+                        },
+                        {
+                            "id": 27,
+                            "name": "sustainable",
+                            "slug": "sustainable"
+                        }
+                    ],
+                    "images": [
+                        {
+                            "id": 12345,
+                            "src": "https://example.com/images/tshirt-front.jpg",
+                            "name": "tshirt-front.jpg",
+                            "alt": "Organic Cotton T-Shirt Front View"
+                        },
+                        {
+                            "id": 12346,
+                            "src": "https://example.com/images/tshirt-back.jpg",
+                            "name": "tshirt-back.jpg",
+                            "alt": "Organic Cotton T-Shirt Back View"
+                        }
+                    ],
+                    "attributes": [
+                        {
+                            "id": 1,
+                            "name": "Color",
+                            "position": 0,
+                            "visible": true,
+                            "variation": true,
+                            "options": [
+                                "White",
+                                "Black",
+                                "Blue"
+                            ]
+                        },
+                        {
+                            "id": 2,
+                            "name": "Size",
+                            "position": 1,
+                            "visible": true,
+                            "variation": true,
+                            "options": [
+                                "S",
+                                "M",
+                                "L",
+                                "XL"
+                            ]
+                        }
+                    ],
+                    "default_attributes": [],
+                    "menu_order": 0,
+                    "meta_data": [
+                        {
+                            "id": 1001,
+                            "key": "_wc_rating_count",
+                            "value": "23"
+                        },
+                        {
+                            "id": 1002,
+                            "key": "_wc_average_rating",
+                            "value": "4.5"
+                        }
+                    ],
+                    "variations": [
+                        {
+                            "id": 67891,
+                            "date_created": "2024-01-10T08:00:00",
+                            "date_modified": "2024-01-15T12:30:00",
+                            "status": "publish",
+                            "featured": false,
+                            "description": "",
+                            "sku": "OCT-001-WH-M",
+                            "price": "24.99",
+                            "regular_price": "29.99",
+                            "sale_price": "24.99",
+                            "date_on_sale_from": null,
+                            "date_on_sale_to": null,
+                            "on_sale": true,
+                            "purchasable": true,
+                            "virtual": false,
+                            "downloadable": false,
+                            "downloads": [],
+                            "download_limit": -1,
+                            "download_expiry": -1,
+                            "tax_status": "taxable",
+                            "tax_class": "",
+                            "manage_stock": true,
+                            "stock_quantity": 25,
+                            "stock_status": "instock",
+                            "backorders": "no",
+                            "backorders_allowed": false,
+                            "backordered": false,
+                            "sold_individually": false,
+                            "weight": "0.2",
+                            "dimensions": {
+                                "length": "30",
+                                "width": "20",
+                                "height": "2"
+                            },
+                            "shipping_class": "standard",
+                            "shipping_class_id": 0,
+                            "image": {
+                                "id": 12345,
+                                "src": "https://example.com/images/tshirt-white-medium.jpg",
+                                "name": "tshirt-white-medium.jpg",
+                                "alt": "Organic Cotton T-Shirt White Medium"
+                            },
+                            "attributes": [
+                                {
+                                    "id": 1,
+                                    "name": "Color",
+                                    "option": "White"
+                                },
+                                {
+                                    "id": 2,
+                                    "name": "Size",
+                                    "option": "M"
+                                }
+                            ],
+                            "menu_order": 1,
+                            "meta_data": []
+                        }
+                    ]
+                },
+                "error": "❌ Currency is required",
+                "validation": {
+                    "errors": [
+                        "❌ Currency is required"
+                    ],
+                    "code": 422
+                }
+            }
+        ],
+        "summary": {
+            "total": 1,
+            "successful": 0,
+            "failed": 1
+        }
+    }
+}

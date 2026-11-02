@@ -1,0 +1,35 @@
+{
+    "product_id": 20051,
+    "title": "T-Shirt",
+    "description": "Comfortable cotton t-shirt",
+    "currency": "USD",
+    "existing_url": "https://shop.com/tshirt",
+    "keywords": [
+        "clothing",
+        "t-shirt"
+    ],
+    "sizes": [
+        {
+            "_id": "size-s",
+            "name": "S"
+        },
+        {
+            "_id": "size-m",
+            "name": "M"
+        },
+        {
+            "_id": "size-l",
+            "name": "L"
+        }
+    ],
+    "variants": [
+        {
+            "variant_id": "variant-1",
+            "color": "Red",
+            "size": "M",
+            "mrp": 25,
+            "selling_price": 20,
+            "quantity": 10
+        }
+    ]
+}

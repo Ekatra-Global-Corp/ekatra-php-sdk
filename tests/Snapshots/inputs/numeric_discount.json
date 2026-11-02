@@ -1,0 +1,10 @@
+{
+    "product_id": "30002",
+    "title": "Gold Chain",
+    "currency": "INR",
+    "variant_quantity": 0,
+    "variant_mrp": 1000,
+    "variant_selling_price": 900,
+    "discount": 15,
+    "image_urls": "https://shop.example.com/images/c1.webp"
+}

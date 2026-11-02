@@ -1,0 +1,12 @@
+{
+    "product_id": "123",
+    "title": "Test Product",
+    "description": "Test Description",
+    "currency": "USD",
+    "existing_url": "https://example.com",
+    "keywords": "test,product",
+    "variant_name": "test",
+    "variant_mrp": "100.00",
+    "variant_selling_price": "80.00",
+    "discount": "20% OFF on DIA"
+}

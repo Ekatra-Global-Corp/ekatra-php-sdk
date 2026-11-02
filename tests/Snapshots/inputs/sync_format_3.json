@@ -1,0 +1,6 @@
+{
+    "product_id": "123",
+    "name": "Test Product",
+    "currency_code": "USD",
+    "thumbnailUrl": "https://example.com/image.jpg"
+}

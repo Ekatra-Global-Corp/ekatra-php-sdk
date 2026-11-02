@@ -1,0 +1,10 @@
+{
+    "product_id": "30001",
+    "title": "Diamond Pendant",
+    "currency": "INR",
+    "variant_quantity": 3,
+    "variant_mrp": 50000,
+    "variant_selling_price": 42000,
+    "discount": "20% OFF on DIA",
+    "image_urls": "https://shop.example.com/images/p1.jpg,https://shop.example.com/images/p2.png"
+}

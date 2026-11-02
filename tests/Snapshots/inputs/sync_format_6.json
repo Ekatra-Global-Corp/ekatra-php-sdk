@@ -1,0 +1,9 @@
+{
+    "success": true,
+    "product_details": {
+        "product_id": "123",
+        "title": "Test Product",
+        "currency": "USD",
+        "image_url": "https://example.com/image.jpg"
+    }
+}

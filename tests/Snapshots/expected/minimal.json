@@ -1,0 +1,192 @@
+{
+    "transformProduct": {
+        "status": "error",
+        "data": null,
+        "metadata": {
+            "sdkVersion": "{sdkVersion}",
+            "validation": {
+                "valid": false,
+                "errors": [
+                    "Existing URL is required",
+                    "At least one keyword is required",
+                    "At least one variant is required",
+                    "Currency must be one of: INR, USD, EUR, GBP"
+                ]
+            },
+            "canAutoTransform": false,
+            "manualSetupRequired": true,
+            "maxQuantity": null
+        },
+        "message": "Product validation failed"
+    },
+    "transformVariant": {
+        "status": "error",
+        "data": null,
+        "metadata": {
+            "sdkVersion": "{sdkVersion}",
+            "validation": {
+                "valid": false,
+                "errors": [
+                    "MRP must be > 0",
+                    "Selling price cannot be greater than MRP",
+                    "At least one image is required",
+                    "Variation at index 0 MRP must be > 0",
+                    "Variation at index 0 selling price cannot be greater than MRP",
+                    "Variation at index 0 must have valid MRP",
+                    "Variation at index 0: selling price cannot be greater than MRP"
+                ]
+            },
+            "canAutoTransform": false,
+            "manualSetupRequired": true,
+            "maxQuantity": null
+        },
+        "message": "Variant validation failed"
+    },
+    "smartTransformProduct": {
+        "status": "error",
+        "data": null,
+        "metadata": {
+            "sdkVersion": "{sdkVersion}",
+            "validation": {
+                "valid": false,
+                "errors": [
+                    "❌ Currency is required",
+                    "❌ Existing URL is required",
+                    "❌ No variant data found",
+                    "❌ At least one keyword is required"
+                ],
+                "suggestions": [
+                    "💡 Add 'currency' field to your data",
+                    "💡 Add 'existing_url' field to your data",
+                    "💡 Add variant data using one of these methods:",
+                    "   Method 1: Add 'variant_name', 'variant_mrp', 'variant_selling_price' fields",
+                    "   Method 2: Add 'variants' array with variant objects",
+                    "💡 Add 'keywords' field to your data"
+                ],
+                "fixInstructions": [
+                    "🔧 Fix: Add 'currency' => 'INR' (or USD, EUR, GBP) to your data array",
+                    "🔧 Fix: Add 'existing_url' => 'https://your-site.com/product' to your data array",
+                    "🔧 Fix: Add variant data or use manual setup with $product->addVariant()",
+                    "🔧 Fix: Add 'keywords' => ['keyword1', 'keyword2'] to your data array"
+                ],
+                "canAutoTransform": false,
+                "manualSetupRequired": true,
+                "dataType": "MIXED_STRUCTURE"
+            },
+            "canAutoTransform": false,
+            "manualSetupRequired": true,
+            "maxQuantity": null
+        },
+        "message": "Product validation failed"
+    },
+    "smartTransformProductFlexible": {
+        "status": "success",
+        "data": {
+            "productId": "99999",
+            "title": "Simple Coffee Mug",
+            "description": "A simple ceramic coffee mug",
+            "currency": "USD",
+            "existingProductUrl": "https://example.com/product",
+            "keywords": "product",
+            "variants": [
+                {
+                    "id": "{generated-id-1}",
+                    "color": "unknown",
+                    "variations": [
+                        {
+                            "sizeId": "{generated-id-2}",
+                            "mrp": 0.0,
+                            "sellingPrice": 12.5,
+                            "discount": 0.0,
+                            "discountLabel": null,
+                            "availability": false,
+                            "quantity": 0,
+                            "size": "freestyle",
+                            "variantId": "{generated-id-1}"
+                        }
+                    ],
+                    "weight": 0,
+                    "thumbnail": "",
+                    "mediaList": []
+                }
+            ],
+            "sizes": [
+                {
+                    "id": "{generated-id-2}",
+                    "name": "freestyle"
+                }
+            ],
+            "offers": [],
+            "handle": "simple-coffee-mug",
+            "countryCode": null
+        },
+        "metadata": {
+            "sdkVersion": "{sdkVersion}",
+            "validation": {
+                "valid": true,
+                "errors": [],
+                "suggestions": [],
+                "canAutoTransform": true,
+                "manualSetupRequired": false
+            },
+            "dataType": "MIXED_STRUCTURE",
+            "canAutoTransform": true,
+            "manualSetupRequired": false,
+            "maxQuantity": null
+        },
+        "message": "Product details retrieved successfully"
+    },
+    "syncProduct": {
+        "status": "error",
+        "data": null,
+        "metadata": {
+            "sdkVersion": "{sdkVersion}",
+            "validation": {
+                "valid": false,
+                "errors": [
+                    "❌ Currency is required"
+                ],
+                "suggestions": [
+                    "💡 Add one of these fields: currency, currency_code, currencyCode, currencyCode, curr..."
+                ],
+                "canAutoTransform": false,
+                "manualSetupRequired": true
+            },
+            "canAutoTransform": false,
+            "manualSetupRequired": true,
+            "maxQuantity": null
+        },
+        "message": "Product sync transformation failed"
+    },
+    "syncProductData": {
+        "exception": "Ekatra\\Product\\Exceptions\\EkatraValidationException",
+        "message": "❌ Currency is required"
+    },
+    "syncProductsBatch": {
+        "successful": [],
+        "failed": [
+            {
+                "index": 0,
+                "input": {
+                    "id": 99999,
+                    "title": "Simple Coffee Mug",
+                    "price": 12.5,
+                    "description": "A simple ceramic coffee mug",
+                    "image": "https://example.com/mug.jpg"
+                },
+                "error": "❌ Currency is required",
+                "validation": {
+                    "errors": [
+                        "❌ Currency is required"
+                    ],
+                    "code": 422
+                }
+            }
+        ],
+        "summary": {
+            "total": 1,
+            "successful": 0,
+            "failed": 1
+        }
+    }
+}

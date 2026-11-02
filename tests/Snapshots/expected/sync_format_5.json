@@ -1,0 +1,347 @@
+{
+    "transformProduct": {
+        "status": "error",
+        "data": null,
+        "metadata": {
+            "sdkVersion": "{sdkVersion}",
+            "validation": {
+                "valid": false,
+                "errors": [
+                    "Description is required",
+                    "Existing URL is required",
+                    "At least one keyword is required",
+                    "At least one variant is required",
+                    "Currency must be one of: INR, USD, EUR, GBP"
+                ]
+            },
+            "canAutoTransform": false,
+            "manualSetupRequired": true,
+            "maxQuantity": null
+        },
+        "message": "Product validation failed"
+    },
+    "transformVariant": {
+        "status": "error",
+        "data": null,
+        "metadata": {
+            "sdkVersion": "{sdkVersion}",
+            "validation": {
+                "valid": false,
+                "errors": [
+                    "Variant name is required",
+                    "MRP must be > 0",
+                    "Selling price must be > 0",
+                    "Image URL at index 0 is not valid",
+                    "Image URL at index 1 is not valid"
+                ]
+            },
+            "canAutoTransform": false,
+            "manualSetupRequired": true,
+            "maxQuantity": null
+        },
+        "message": "Variant validation failed"
+    },
+    "smartTransformProduct": {
+        "status": "error",
+        "data": null,
+        "metadata": {
+            "sdkVersion": "{sdkVersion}",
+            "validation": {
+                "valid": false,
+                "errors": [
+                    "❌ Product ID is required",
+                    "❌ Product title is required",
+                    "❌ Currency is required",
+                    "❌ Product description is required",
+                    "❌ Existing URL is required",
+                    "❌ No variant data found",
+                    "❌ At least one keyword is required"
+                ],
+                "suggestions": [
+                    "💡 Add 'product_id' field to your data",
+                    "💡 Add 'title' field to your data",
+                    "💡 Add 'currency' field to your data",
+                    "💡 Add 'description' field to your data",
+                    "💡 Add 'existing_url' field to your data",
+                    "💡 Add variant data using one of these methods:",
+                    "   Method 1: Add 'variant_name', 'variant_mrp', 'variant_selling_price' fields",
+                    "   Method 2: Add 'variants' array with variant objects",
+                    "💡 Add 'keywords' field to your data"
+                ],
+                "fixInstructions": [
+                    "🔧 Fix: Add 'product_id' => 'YOUR_PRODUCT_ID' to your data array",
+                    "🔧 Fix: Add 'title' => 'Your Product Title' to your data array",
+                    "🔧 Fix: Add 'currency' => 'INR' (or USD, EUR, GBP) to your data array",
+                    "🔧 Fix: Add 'description' => 'Your product description' to your data array",
+                    "🔧 Fix: Add 'existing_url' => 'https://your-site.com/product' to your data array",
+                    "🔧 Fix: Add variant data or use manual setup with $product->addVariant()",
+                    "🔧 Fix: Add 'keywords' => ['keyword1', 'keyword2'] to your data array"
+                ],
+                "canAutoTransform": false,
+                "manualSetupRequired": true,
+                "dataType": "MIXED_STRUCTURE"
+            },
+            "canAutoTransform": false,
+            "manualSetupRequired": true,
+            "maxQuantity": null
+        },
+        "message": "Product validation failed"
+    },
+    "smartTransformProductFlexible": {
+        "status": "success",
+        "data": {
+            "productId": "123",
+            "title": "Test Product",
+            "description": "No description available",
+            "currency": "USD",
+            "existingProductUrl": "https://example.com/product",
+            "keywords": "product",
+            "variants": [
+                {
+                    "id": "{generated-id-1}",
+                    "color": "unknown",
+                    "variations": [
+                        {
+                            "sizeId": "{generated-id-2}",
+                            "mrp": 0.0,
+                            "sellingPrice": 0.0,
+                            "discount": 0.0,
+                            "discountLabel": null,
+                            "availability": false,
+                            "quantity": 0,
+                            "size": "freestyle",
+                            "variantId": "{generated-id-1}"
+                        }
+                    ],
+                    "weight": 0,
+                    "thumbnail": "https://example.com/image2.jpg",
+                    "mediaList": [
+                        {
+                            "mediaType": "IMAGE",
+                            "playUrl": "https://example.com/image2.jpg",
+                            "thumbnailUrl": "https://example.com/image2.jpg",
+                            "mimeType": "image/jpeg",
+                            "playerTypeEnum": "IMAGE",
+                            "weight": 0,
+                            "duration": 0,
+                            "size": 0
+                        }
+                    ]
+                }
+            ],
+            "sizes": [
+                {
+                    "id": "{generated-id-2}",
+                    "name": "freestyle"
+                }
+            ],
+            "offers": [],
+            "handle": "test-product",
+            "countryCode": null
+        },
+        "metadata": {
+            "sdkVersion": "{sdkVersion}",
+            "validation": {
+                "valid": true,
+                "errors": [],
+                "suggestions": [],
+                "canAutoTransform": true,
+                "manualSetupRequired": false
+            },
+            "dataType": "MIXED_STRUCTURE",
+            "canAutoTransform": true,
+            "manualSetupRequired": false,
+            "maxQuantity": null
+        },
+        "message": "Product details retrieved successfully"
+    },
+    "syncProduct": {
+        "status": "success",
+        "data": {
+            "productId": "123",
+            "title": "Test Product",
+            "currency": "USD",
+            "active": true,
+            "searchKeywords": "",
+            "specifications": [],
+            "offers": [
+                {
+                    "productOfferDetails": [
+                        {}
+                    ]
+                }
+            ],
+            "variants": [
+                {
+                    "id": "{generated-id-1}",
+                    "color": "unknown",
+                    "variations": [
+                        {
+                            "sizeId": "{generated-id-2}",
+                            "mrp": "0",
+                            "sellingPrice": "0",
+                            "discountLabel": "",
+                            "discount": "0",
+                            "availability": true,
+                            "quantity": 0,
+                            "size": "freestyle",
+                            "variantId": "{generated-id-1}"
+                        }
+                    ],
+                    "weight": 1,
+                    "thumbnail": "https://example.com/image1.jpg",
+                    "mediaList": [
+                        {
+                            "mediaType": "IMAGE",
+                            "thumbnailUrl": "https://example.com/image1.jpg",
+                            "playUrl": "https://example.com/image1.jpg",
+                            "mimeType": "image/jpeg",
+                            "playerTypeEnum": "IMAGE",
+                            "weight": 0,
+                            "duration": 0,
+                            "size": 0
+                        }
+                    ]
+                }
+            ],
+            "sizes": [
+                {
+                    "id": "{generated-id-2}",
+                    "name": "freestyle"
+                }
+            ]
+        },
+        "metadata": {
+            "sdkVersion": "{sdkVersion}",
+            "validation": {
+                "valid": true,
+                "errors": [],
+                "suggestions": [],
+                "canAutoTransform": true,
+                "manualSetupRequired": false
+            },
+            "dataType": "SYNC_FORMAT",
+            "canAutoTransform": true,
+            "manualSetupRequired": false
+        },
+        "message": "Product synced successfully"
+    },
+    "syncProductData": {
+        "productId": "123",
+        "title": "Test Product",
+        "currency": "USD",
+        "active": true,
+        "searchKeywords": "",
+        "specifications": [],
+        "offers": [
+            {
+                "productOfferDetails": [
+                    {}
+                ]
+            }
+        ],
+        "variants": [
+            {
+                "id": "{generated-id-1}",
+                "color": "unknown",
+                "variations": [
+                    {
+                        "sizeId": "{generated-id-2}",
+                        "mrp": "0",
+                        "sellingPrice": "0",
+                        "discountLabel": "",
+                        "discount": "0",
+                        "availability": true,
+                        "quantity": 0,
+                        "size": "freestyle",
+                        "variantId": "{generated-id-1}"
+                    }
+                ],
+                "weight": 1,
+                "thumbnail": "https://example.com/image1.jpg",
+                "mediaList": [
+                    {
+                        "mediaType": "IMAGE",
+                        "thumbnailUrl": "https://example.com/image1.jpg",
+                        "playUrl": "https://example.com/image1.jpg",
+                        "mimeType": "image/jpeg",
+                        "playerTypeEnum": "IMAGE",
+                        "weight": 0,
+                        "duration": 0,
+                        "size": 0
+                    }
+                ]
+            }
+        ],
+        "sizes": [
+            {
+                "id": "{generated-id-2}",
+                "name": "freestyle"
+            }
+        ]
+    },
+    "syncProductsBatch": {
+        "successful": [
+            {
+                "productId": "123",
+                "title": "Test Product",
+                "currency": "USD",
+                "active": true,
+                "searchKeywords": "",
+                "specifications": [],
+                "offers": [
+                    {
+                        "productOfferDetails": [
+                            {}
+                        ]
+                    }
+                ],
+                "variants": [
+                    {
+                        "id": "{generated-id-1}",
+                        "color": "unknown",
+                        "variations": [
+                            {
+                                "sizeId": "{generated-id-2}",
+                                "mrp": "0",
+                                "sellingPrice": "0",
+                                "discountLabel": "",
+                                "discount": "0",
+                                "availability": true,
+                                "quantity": 0,
+                                "size": "freestyle",
+                                "variantId": "{generated-id-1}"
+                            }
+                        ],
+                        "weight": 1,
+                        "thumbnail": "https://example.com/image1.jpg",
+                        "mediaList": [
+                            {
+                                "mediaType": "IMAGE",
+                                "thumbnailUrl": "https://example.com/image1.jpg",
+                                "playUrl": "https://example.com/image1.jpg",
+                                "mimeType": "image/jpeg",
+                                "playerTypeEnum": "IMAGE",
+                                "weight": 0,
+                                "duration": 0,
+                                "size": 0
+                            }
+                        ]
+                    }
+                ],
+                "sizes": [
+                    {
+                        "id": "{generated-id-2}",
+                        "name": "freestyle"
+                    }
+                ]
+            }
+        ],
+        "failed": [],
+        "summary": {
+            "total": 1,
+            "successful": 1,
+            "failed": 0
+        }
+    }
+}

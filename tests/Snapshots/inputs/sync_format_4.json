@@ -1,0 +1,9 @@
+{
+    "id": "123",
+    "product_name": "Test Product",
+    "currency": "USD",
+    "images": [
+        "https://example.com/image1.jpg",
+        "https://example.com/image2.jpg"
+    ]
+}

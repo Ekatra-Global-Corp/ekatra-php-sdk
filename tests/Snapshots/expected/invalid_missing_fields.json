@@ -1,0 +1,169 @@
+{
+    "transformProduct": {
+        "status": "error",
+        "data": null,
+        "metadata": {
+            "sdkVersion": "{sdkVersion}",
+            "validation": {
+                "valid": false,
+                "errors": [
+                    "Product ID is required",
+                    "Title is required",
+                    "Existing URL is required",
+                    "At least one keyword is required",
+                    "At least one variant is required",
+                    "Currency must be one of: INR, USD, EUR, GBP"
+                ]
+            },
+            "canAutoTransform": false,
+            "manualSetupRequired": true,
+            "maxQuantity": null
+        },
+        "message": "Product validation failed"
+    },
+    "transformVariant": {
+        "status": "error",
+        "data": null,
+        "metadata": {
+            "sdkVersion": "{sdkVersion}",
+            "validation": {
+                "valid": false,
+                "errors": [
+                    "Variant name is required",
+                    "MRP must be > 0",
+                    "Selling price must be > 0",
+                    "At least one image is required"
+                ]
+            },
+            "canAutoTransform": false,
+            "manualSetupRequired": true,
+            "maxQuantity": null
+        },
+        "message": "Variant validation failed"
+    },
+    "smartTransformProduct": {
+        "status": "error",
+        "data": null,
+        "metadata": {
+            "sdkVersion": "{sdkVersion}",
+            "validation": {
+                "valid": false,
+                "errors": [
+                    "❌ Product ID is required",
+                    "❌ Product title is required",
+                    "❌ Currency is required",
+                    "❌ Existing URL is required",
+                    "❌ No variant data found",
+                    "❌ At least one keyword is required"
+                ],
+                "suggestions": [
+                    "💡 Add 'product_id' field to your data",
+                    "💡 Add 'title' field to your data",
+                    "💡 Add 'currency' field to your data",
+                    "💡 Add 'existing_url' field to your data",
+                    "💡 Add variant data using one of these methods:",
+                    "   Method 1: Add 'variant_name', 'variant_mrp', 'variant_selling_price' fields",
+                    "   Method 2: Add 'variants' array with variant objects",
+                    "💡 Add 'keywords' field to your data"
+                ],
+                "fixInstructions": [
+                    "🔧 Fix: Add 'product_id' => 'YOUR_PRODUCT_ID' to your data array",
+                    "🔧 Fix: Add 'title' => 'Your Product Title' to your data array",
+                    "🔧 Fix: Add 'currency' => 'INR' (or USD, EUR, GBP) to your data array",
+                    "🔧 Fix: Add 'existing_url' => 'https://your-site.com/product' to your data array",
+                    "🔧 Fix: Add variant data or use manual setup with $product->addVariant()",
+                    "🔧 Fix: Add 'keywords' => ['keyword1', 'keyword2'] to your data array"
+                ],
+                "canAutoTransform": false,
+                "manualSetupRequired": true,
+                "dataType": "MIXED_STRUCTURE"
+            },
+            "canAutoTransform": false,
+            "manualSetupRequired": true,
+            "maxQuantity": null
+        },
+        "message": "Product validation failed"
+    },
+    "smartTransformProductFlexible": {
+        "status": "error",
+        "data": null,
+        "metadata": {
+            "sdkVersion": "{sdkVersion}",
+            "validation": {
+                "valid": false,
+                "errors": [
+                    "❌ Product ID is required",
+                    "❌ Product title is required"
+                ],
+                "suggestions": [
+                    "💡 Add 'product_id' field to your data",
+                    "💡 Add 'title' field to your data"
+                ],
+                "canAutoTransform": false,
+                "manualSetupRequired": true
+            },
+            "canAutoTransform": false,
+            "manualSetupRequired": true,
+            "maxQuantity": null
+        },
+        "message": "Product transformation failed"
+    },
+    "syncProduct": {
+        "status": "error",
+        "data": null,
+        "metadata": {
+            "sdkVersion": "{sdkVersion}",
+            "validation": {
+                "valid": false,
+                "errors": [
+                    "❌ Product ID is required",
+                    "❌ Product title is required",
+                    "❌ Currency is required",
+                    "❌ Image URL is required"
+                ],
+                "suggestions": [
+                    "💡 Add one of these fields: productId, product_id, id, item_id, sku...",
+                    "💡 Add one of these fields: title, name, product_name, product_title, productName...",
+                    "💡 Add one of these fields: currency, currency_code, currencyCode, currencyCode, curr...",
+                    "💡 Add one of these fields: imageUrl, image_url, image_urls, thumbnailUrl, thumbnail_url..."
+                ],
+                "canAutoTransform": false,
+                "manualSetupRequired": true
+            },
+            "canAutoTransform": false,
+            "manualSetupRequired": true,
+            "maxQuantity": null
+        },
+        "message": "Product sync transformation failed"
+    },
+    "syncProductData": {
+        "exception": "Ekatra\\Product\\Exceptions\\EkatraValidationException",
+        "message": "❌ Product ID is required ❌ Product title is required ❌ Currency is required ❌ Image URL is required"
+    },
+    "syncProductsBatch": {
+        "successful": [],
+        "failed": [
+            {
+                "index": 0,
+                "input": {
+                    "description": "No id, title or currency"
+                },
+                "error": "❌ Product ID is required ❌ Product title is required ❌ Currency is required ❌ Image URL is required",
+                "validation": {
+                    "errors": [
+                        "❌ Product ID is required",
+                        "❌ Product title is required",
+                        "❌ Currency is required",
+                        "❌ Image URL is required"
+                    ],
+                    "code": 422
+                }
+            }
+        ],
+        "summary": {
+            "total": 1,
+            "successful": 0,
+            "failed": 1
+        }
+    }
+}
