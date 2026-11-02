@@ -113,7 +113,7 @@ return [
     */
     'testing' => [
         'enabled' => env('EKATRA_TESTING_ENABLED', true),
-        'routes_enabled' => env('EKATRA_TEST_ROUTES_ENABLED', true),
+        'routes_enabled' => env('EKATRA_TEST_ROUTES_ENABLED', false), // Also requires APP_ENV=local or testing
         'sample_data_path' => null, // Path to sample data file
     ],
 ];

@@ -13,12 +13,36 @@ A powerful PHP SDK for transforming your product data into the standardized Ekat
 - 🧪 **Customer Testing Tools** - Easy verification tools for customers
 - 📚 **Comprehensive Documentation** - Complete guides, examples, and troubleshooting
 
+## Requirements
+
+| SDK | PHP | Laravel (optional) |
+|-----|-----|--------------------|
+| 2.2.x | 7.4 – 8.5 | 6, 7, 8, 9, 10, 11, 12, 13 |
+| 2.1.x | 7.4 – 8.4 | 6 – 11 |
+
+Laravel is optional: the core SDK works in any PHP project. Each Laravel version needs its own minimum PHP (Laravel 12 needs PHP 8.2+, Laravel 13 needs PHP 8.3+); Composer resolves this automatically.
+
 ## Installation
 
 ### Via Composer
 
 ```bash
 composer require ekatra/product-sdk
+```
+
+### Installing a release candidate (staging)
+
+Release candidates (e.g. `2.2.0-RC1`) are published for testing on staging before a stable release. Composer never installs them unless you ask for the exact version, so production installs are unaffected:
+
+```bash
+# On your staging environment only
+composer require ekatra/product-sdk:2.2.0-RC1
+```
+
+Once the stable version is released, switch back to a normal constraint:
+
+```bash
+composer require ekatra/product-sdk:^2.2
 ```
 
 ### Laravel Integration
@@ -955,7 +979,12 @@ php artisan ekatra:test-mapping --format
 
 ### Test Endpoints
 
-The SDK provides test endpoints for easy testing:
+The SDK provides test endpoints for easy testing. Since v2.2.0 they are **off by default** and only load when both are true:
+
+- `EKATRA_TEST_ROUTES_ENABLED=true` in your `.env`
+- `APP_ENV` is `local` or `testing`
+
+Never enable them on a publicly reachable server.
 
 ```bash
 # Test product mapping

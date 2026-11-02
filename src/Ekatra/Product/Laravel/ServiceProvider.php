@@ -3,6 +3,7 @@
 namespace Ekatra\Product\Laravel;
 
 use Illuminate\Support\ServiceProvider as BaseServiceProvider;
+use Ekatra\Product\EkatraSDK;
 use Ekatra\Product\Laravel\Commands\TestMappingCommand;
 
 /**
@@ -18,8 +19,8 @@ class ServiceProvider extends BaseServiceProvider
     public function register()
     {
         // Load config only if it exists and is readable
-        $configPath = __DIR__ . '/../../config/ekatra.php';
-        
+        $configPath = $this->configPath();
+
         if (file_exists($configPath) && is_readable($configPath)) {
             try {
                 $this->mergeConfigFrom($configPath, 'ekatra');
@@ -28,6 +29,11 @@ class ServiceProvider extends BaseServiceProvider
                 // This prevents upgrade issues while still allowing config when possible
             }
         }
+
+        // Backs the Ekatra facade
+        $this->app->singleton('ekatra', function () {
+            return new EkatraSDK();
+        });
     }
 
     /**
@@ -36,8 +42,8 @@ class ServiceProvider extends BaseServiceProvider
     public function boot()
     {
         // Publish configuration with error handling
-        $configPath = __DIR__ . '/../../config/ekatra.php';
-        
+        $configPath = $this->configPath();
+
         if (file_exists($configPath) && is_readable($configPath)) {
             try {
                 $this->publishes([
@@ -55,9 +61,10 @@ class ServiceProvider extends BaseServiceProvider
             ]);
         }
 
-        // Register routes for testing only if file exists
+        // Register test routes only when explicitly enabled (EKATRA_TEST_ROUTES_ENABLED=true).
+        // routes.php additionally restricts them to local/testing environments.
         $routesPath = __DIR__ . '/routes.php';
-        if (file_exists($routesPath)) {
+        if (file_exists($routesPath) && $this->app['config']->get('ekatra.testing.routes_enabled', false)) {
             $this->loadRoutesFrom($routesPath);
         }
     }
@@ -68,5 +75,13 @@ class ServiceProvider extends BaseServiceProvider
     public function provides(): array
     {
         return [];
+    }
+
+    /**
+     * Path to the package config file (config/ekatra.php at the package root)
+     */
+    private function configPath(): string
+    {
+        return dirname(__DIR__, 4) . '/config/ekatra.php';
     }
 }
