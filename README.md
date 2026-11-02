@@ -22,6 +22,8 @@ A powerful PHP SDK for transforming your product data into the standardized Ekat
 
 Laravel is optional: the core SDK works in any PHP project. Each Laravel version needs its own minimum PHP (Laravel 12 needs PHP 8.2+, Laravel 13 needs PHP 8.3+); Composer resolves this automatically.
 
+With Laravel 9, use PHP 8.1 or newer. The SDK blocks Symfony versions with known security issues, and the only Symfony 6 releases that run on PHP 8.0 are among them.
+
 ## Installation
 
 ### Via Composer

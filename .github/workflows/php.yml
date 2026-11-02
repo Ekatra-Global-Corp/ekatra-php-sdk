@@ -24,7 +24,8 @@ jobs:
           - { laravel: 8,  testbench: '^6.0',  php: '7.4' }
           - { laravel: 8,  testbench: '^6.0',  php: '8.0' }
           - { laravel: 8,  testbench: '^6.0',  php: '8.1' }
-          - { laravel: 9,  testbench: '^7.0',  php: '8.0' }
+          # Laravel 9 needs PHP 8.1+ here: the symfony/http-foundation security conflict
+          # in composer.json excludes Symfony 6.0.x, the only Symfony 6 line for PHP 8.0
           - { laravel: 9,  testbench: '^7.0',  php: '8.1' }
           - { laravel: 9,  testbench: '^7.0',  php: '8.2' }
           - { laravel: 10, testbench: '^8.0',  php: '8.1' }
