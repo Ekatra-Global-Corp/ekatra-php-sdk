@@ -1,7 +1,6 @@
 {
     "transformProduct": {
-        "exception": "TypeError",
-        "message": "Cannot assign string to property Ekatra\\Product\\Core\\EkatraProduct::$tags of type array"
+        "error": "TypeError"
     },
     "transformVariant": {
         "status": "error",

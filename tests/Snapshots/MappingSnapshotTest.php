@@ -64,8 +64,11 @@ class MappingSnapshotTest extends TestCase
             $ids = [];
             try {
                 $results[$method] = $this->normalize($call($input), $ids);
-            } catch (\Throwable $e) {
+            } catch (\Exception $e) {
                 $results[$method] = ['exception' => get_class($e), 'message' => $e->getMessage()];
+            } catch (\Throwable $e) {
+                // PHP engine errors (TypeError etc.) are worded differently across PHP versions
+                $results[$method] = ['error' => get_class($e)];
             }
         }
 
